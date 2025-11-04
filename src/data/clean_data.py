@@ -1,10 +1,12 @@
 import pandas as pd
 import os
-from src.data.clean_text import clean_text
+from clean_text import clean_text
 
 # Dossiers d'entrée et de sortie
-input_dir = os.path.join("data", "raw")
-output_dir = os.path.join("data", "cleaned")
+# input_dir = os.path.join("data", "raw")
+# output_dir = os.path.join("data", "cleaned")
+input_dir = "/data/raw"
+output_dir = "/data/cleaned"
 
 # Chargement des fichiers CSV
 X_train = pd.read_csv(os.path.join(input_dir, "X_train_update.csv"))
