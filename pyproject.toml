@@ -30,8 +30,8 @@ dependencies = [
 # ETL - Extraction, Transformation, Loading
 # ============================================================================
 etl = [
-    "pandas=2.1.0",  # 2.1+ supporte bien Python 3.11
-    "beautifulsoup4=4.11.2",  # 4.11.2 supporte bien Python 3.11
+    "pandas==2.1.0",  # 2.1+ supporte bien Python 3.11
+    "beautifulsoup4==4.11.2",  # 4.11.2 supporte bien Python 3.11
 ]
 
 # ============================================================================
