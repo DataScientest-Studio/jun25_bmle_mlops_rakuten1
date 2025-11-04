@@ -1,7 +1,9 @@
-import pandas as pd
 import re
 import html
-from bs4 import BeautifulSoup
+import warnings
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 
 def clean_text(text):

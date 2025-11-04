@@ -29,7 +29,8 @@ db.createCollection("users");
 db.createCollection("models");
 db.createCollection("predictions");
 db.createCollection("experiments");
-db.createCollection("datasets");
+db.createCollection("data_cleaned");
+db.createCollection("data_preprocessed");
 db.createCollection("training_jobs");
 db.createCollection("api_logs");
 
@@ -86,9 +87,9 @@ db.experiments.createIndex({ "name": 1 }, { name: "idx_experiments_name" });
 db.experiments.createIndex({ "created_at": -1 }, { name: "idx_experiments_created" });
 db.experiments.createIndex({ "status": 1 }, { name: "idx_experiments_status" });
 
-db.datasets.createIndex({ "dataset_id": 1 }, { unique: true, name: "idx_datasets_id" });
-db.datasets.createIndex({ "name": 1 }, { name: "idx_datasets_name" });
-db.datasets.createIndex({ "created_at": -1 }, { name: "idx_datasets_created" });
+//db.datasets.createIndex({ "dataset_id": 1 }, { unique: true, name: "idx_datasets_id" });
+//db.datasets.createIndex({ "name": 1 }, { name: "idx_datasets_name" });
+//db.datasets.createIndex({ "created_at": -1 }, { name: "idx_datasets_created" });
 
 db.training_jobs.createIndex({ "job_id": 1 }, { unique: true, name: "idx_jobs_id" });
 db.training_jobs.createIndex({ "status": 1 }, { name: "idx_jobs_status" });
