@@ -1,0 +1,50 @@
+{
+  "models": [
+    {
+      "keys": { "tags": 1 },
+      "options": { "name": "idx_models_tags" }
+    },
+    {
+      "keys": { "framework": 1, "status": 1 },
+      "options": { "name": "idx_models_framework_status" }
+    },
+    {
+      "keys": { "metrics.accuracy": -1 },
+      "options": { "name": "idx_models_accuracy", "sparse": true }
+    }
+  ],
+  "predictions": [
+    {
+      "keys": { "model_id": 1, "timestamp": -1 },
+      "options": { "name": "idx_predictions_model_time" }
+    },
+    {
+      "keys": { "result.confidence": -1 },
+      "options": { "name": "idx_predictions_confidence", "sparse": true }
+    }
+  ],
+  "experiments": [
+    {
+      "keys": { "tags": 1 },
+      "options": { "name": "idx_experiments_tags" }
+    },
+    {
+      "keys": { "metrics.best_score": -1 },
+      "options": { "name": "idx_experiments_best_score", "sparse": true }
+    }
+  ],
+  "training_jobs": [
+    {
+      "keys": { "model_id": 1, "status": 1 },
+      "options": { "name": "idx_jobs_model_status" }
+    },
+    {
+      "keys": { "started_at": -1 },
+      "options": { "name": "idx_jobs_started", "sparse": true }
+    },
+    {
+      "keys": { "completed_at": -1 },
+      "options": { "name": "idx_jobs_completed", "sparse": true }
+    }
+  ]
+}

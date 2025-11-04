@@ -1,0 +1,389 @@
+[project]
+name = "mlops-rakuten"
+version = "0.1.0"
+description = "Plateforme MLOps Rakuten - ML Pipeline avec FastAPI et MongoDB"
+readme = "README.md"
+requires-python = "==3.11.*"
+license = {text = "MIT"}
+authors = [
+    {name = "Votre Nom", email = "votre.email@example.com"}
+]
+keywords = ["fastapi", "machine-learning", "mongodb", "mlops", "rakuten"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.11",
+]
+
+# ============================================================================
+# DÉPENDANCES DE BASE (CORE) - Installation minimale
+# ============================================================================
+dependencies = [
+    "pydantic>=2.5.0,<3.0.0",
+    "pydantic-settings>=2.1.0,<3.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+
+# ============================================================================
+# API - FastAPI et sécurité OAuth2/JWT
+# ============================================================================
+api = [
+    # Framework web
+    "fastapi>=0.104.0,<1.0.0",
+    "uvicorn[standard]>=0.24.0,<1.0.0",
+    
+    # Sécurité et authentification
+    "python-jose[cryptography]>=3.3.0,<4.0.0",
+    "passlib[bcrypt]>=1.7.4,<2.0.0",
+    "python-multipart>=0.0.6",
+    
+    # Client HTTP pour tests
+    "httpx>=0.25.2,<1.0.0",
+]
+
+# ============================================================================
+# DATABASE - MongoDB et drivers
+# ============================================================================
+database = [
+    # MongoDB driver officiel
+    "pymongo>=4.6.0,<5.0.0",
+    
+    # ODM MongoDB (Object Document Mapper)
+    "motor>=3.3.2,<4.0.0",  # Driver async pour MongoDB
+    "beanie>=1.23.0,<2.0.0",  # ODM moderne basé sur Pydantic
+]
+
+# ============================================================================
+# DATA SCIENCE - ML Pipeline complet (Python 3.11 optimisé)
+# ============================================================================
+datascience = [
+    # --- Core data (versions compatibles Python 3.11) ---
+    "pandas>=2.1.0,<2.3.0",  # 2.1+ supporte bien Python 3.11
+    "numpy>=1.26.0,<2.0.0",  # 1.26+ est stable avec Python 3.11
+    "joblib>=1.3.0,<2.0.0",
+    
+    # --- Text preprocessing ---
+    "scikit-learn>=1.3.0,<2.0.0",  # 1.3+ optimisé pour Python 3.11
+    
+    # --- Image preprocessing (versions compatibles Python 3.11) ---
+    "torch>=2.1.0,<3.0.0",  # 2.1+ supporte officiellement Python 3.11
+    "torchvision>=0.16.0,<1.0.0",  # Compatible avec torch 2.1+
+    "pillow>=10.0.0,<11.0.0",  # 10.x stable avec Python 3.11
+    
+    # --- Model training ---
+    "xgboost>=2.0.0,<3.0.0",  # 2.0+ optimisé pour Python 3.11
+    
+    # --- Evaluation & utils ---
+    "matplotlib>=3.8.0,<4.0.0",  # 3.8+ pour Python 3.11
+    "seaborn>=0.13.0,<1.0.0",
+    "tqdm>=4.66.0,<5.0.0",
+]
+
+# ============================================================================
+# AIRFLOW - Orchestration de workflows ML
+# ============================================================================
+airflow = [
+    # Airflow core
+    "apache-airflow>=2.8.0,<3.0.0",
+    "apache-airflow-providers-mongo>=3.5.0,<4.0.0",
+    
+    # Providers utiles
+    "apache-airflow-providers-http>=4.7.0,<5.0.0",
+    "apache-airflow-providers-docker>=3.9.0,<4.0.0",
+    
+    # Connexion à nos services
+    "apache-airflow-providers-celery>=3.5.0,<4.0.0",  # Pour distributed tasks
+]
+
+# ============================================================================
+# MLFLOW - Tracking et Registry (CONTAINER SÉPARÉ)
+# MLflow server isolé pour éviter dépendances lourdes dans autres containers
+# ============================================================================
+mlflow = [
+    # MLflow core
+    "mlflow>=2.9.0,<3.0.0",
+    
+    # Client léger pour tracking uniquement (pas de server)
+    "mlflow-skinny>=2.9.0,<3.0.0",  # Version allégée sans dépendances lourdes
+    
+    # Storage backend (pour le serveur MLflow uniquement)
+    "boto3>=1.34.0,<2.0.0",  # Pour S3-compatible storage (MinIO)
+    "psycopg2-binary>=2.9.9,<3.0.0",  # Pour PostgreSQL backend
+]
+
+# ============================================================================
+# MLFLOW CLIENT - Client léger pour les autres containers
+# Uniquement pour logging depuis containers API/ML, sans serveur
+# ============================================================================
+mlflow-client = [
+    "mlflow-skinny>=2.9.0,<3.0.0",  # Client minimal sans dépendances serveur
+]
+
+# ============================================================================
+# MONITORING - Prometheus et Grafana
+# ============================================================================
+monitoring = [
+    # Prometheus client
+    "prometheus-client>=0.19.0,<1.0.0",
+    "prometheus-fastapi-instrumentator>=6.1.0,<7.0.0",  # FastAPI metrics
+    
+    # Grafana client pour API
+    "grafana-client>=3.5.0,<4.0.0",
+    
+    # Métriques système
+    "psutil>=5.9.0,<6.0.0",  # CPU, mémoire, disque
+]
+
+# ============================================================================
+# DEV - Outils de développement (formatting, linting, testing)
+# ============================================================================
+dev = [
+    # Linting et formatting (Ruff uniquement)
+    "ruff>=0.8.0,<1.0.0",
+    
+    # Type checking
+    "mypy>=1.7.0,<2.0.0",
+    
+    # Testing
+    "pytest>=7.4.3,<8.0.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "pytest-asyncio>=0.21.1,<1.0.0",
+    "pytest-mock>=3.12.0,<4.0.0",
+    
+    # Pre-commit hooks
+    "pre-commit>=3.5.0,<4.0.0",
+    
+    # Documentation
+    "mkdocs>=1.5.3,<2.0.0",
+    "mkdocs-material>=9.5.0,<10.0.0",
+]
+
+# ============================================================================
+# ALL - Tout pour développement local complet
+# ============================================================================
+all = [
+    # API stack
+    "fastapi>=0.104.0,<1.0.0",
+    "uvicorn[standard]>=0.24.0,<1.0.0",
+    "python-jose[cryptography]>=3.3.0,<4.0.0",
+    "passlib[bcrypt]>=1.7.4,<2.0.0",
+    "python-multipart>=0.0.6",
+    "httpx>=0.25.2,<1.0.0",
+    
+    # Database
+    "pymongo>=4.6.0,<5.0.0",
+    "motor>=3.3.2,<4.0.0",
+    "beanie>=1.23.0,<2.0.0",
+    
+    # Data science
+    "pandas>=2.1.0,<2.3.0",
+    "numpy>=1.26.0,<2.0.0",
+    "joblib>=1.3.0,<2.0.0",
+    "scikit-learn>=1.3.0,<2.0.0",
+    "torch>=2.1.0,<3.0.0",
+    "torchvision>=0.16.0,<1.0.0",
+    "pillow>=10.0.0,<11.0.0",
+    "xgboost>=2.0.0,<3.0.0",
+    "matplotlib>=3.8.0,<4.0.0",
+    "seaborn>=0.13.0,<1.0.0",
+    "tqdm>=4.66.0,<5.0.0",
+    
+    # Airflow
+    "apache-airflow>=2.8.0,<3.0.0",
+    "apache-airflow-providers-mongo>=3.5.0,<4.0.0",
+    "apache-airflow-providers-http>=4.7.0,<5.0.0",
+    "apache-airflow-providers-docker>=3.9.0,<4.0.0",
+    "apache-airflow-providers-celery>=3.5.0,<4.0.0",
+    
+    # MLflow
+    "mlflow>=2.9.0,<3.0.0",
+    "boto3>=1.34.0,<2.0.0",
+    "psycopg2-binary>=2.9.9,<3.0.0",
+    
+    # Monitoring
+    "prometheus-client>=0.19.0,<1.0.0",
+    "prometheus-fastapi-instrumentator>=6.1.0,<7.0.0",
+    "grafana-client>=3.5.0,<4.0.0",
+    "psutil>=5.9.0,<6.0.0",
+    
+    # Dev tools
+    "ruff>=0.8.0,<1.0.0",
+    "mypy>=1.7.0,<2.0.0",
+    "pytest>=7.4.3,<8.0.0",
+    "pytest-cov>=4.1.0,<5.0.0",
+    "pytest-asyncio>=0.21.1,<1.0.0",
+    "pytest-mock>=3.12.0,<4.0.0",
+    "pre-commit>=3.5.0,<4.0.0",
+    "mkdocs>=1.5.3,<2.0.0",
+    "mkdocs-material>=9.5.0,<10.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ============================================================================
+# CONFIGURATION RUFF - Linting et formatting
+# ============================================================================
+[tool.ruff]
+# Longueur de ligne (PEP 8 recommande 79, mais 100 est plus pratique)
+line-length = 100
+target-version = "py311"
+
+# Indentation (PEP 8)
+indent-width = 4
+
+# Règles activées - niveau modéré, pas trop strict
+select = [
+    # Pycodestyle
+    "E",   # Erreurs de style (PEP 8)
+    "W",   # Warnings de style
+    
+    # Pyflakes
+    "F",   # Erreurs de logique (imports inutilisés, variables non définies)
+    
+    # isort
+    "I",   # Tri des imports (PEP 8)
+    
+    # pyupgrade
+    "UP",  # Syntaxe moderne Python (f-strings, type hints)
+    
+    # flake8-bugbear
+    "B",   # Bugs et anti-patterns courants
+    
+    # flake8-simplify
+    "SIM", # Simplifications de code
+    
+    # flake8-comprehensions
+    "C4",  # Compréhensions de listes/dicts optimisées
+]
+
+# Règles ignorées pour éviter trop de warnings
+ignore = [
+    "E501",    # Line too long (géré par le formateur)
+    "B008",    # Function calls in argument defaults (FastAPI Depends)
+    "UP007",   # Use X | Y for unions (compatibilité)
+]
+
+# Exclusions
+exclude = [
+    ".git",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    "migrations",
+]
+
+# Fichiers spécifiques
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401", "F403"]  # Imports inutilisés OK dans __init__
+"tests/**/*.py" = ["E", "F"]       # Tests moins stricts
+"scripts/**/*.py" = ["E501"]       # Scripts peuvent avoir lignes longues
+
+# Configuration du formateur Ruff
+[tool.ruff.format]
+quote-style = "double"              # PEP 8 recommande double quotes
+indent-style = "space"              # PEP 8: espaces, pas tabs
+line-ending = "auto"                # Détection automatique
+skip-magic-trailing-comma = false   # Respect des trailing commas
+
+# Configuration isort (import sorting)
+[tool.ruff.lint.isort]
+known-first-party = ["src", "mlops_rakuten"]
+section-order = [
+    "future",
+    "standard-library",
+    "third-party",
+    "first-party",
+    "local-folder"
+]
+lines-after-imports = 2
+
+# Configuration pydocstyle (docstrings)
+[tool.ruff.lint.pydocstyle]
+convention = "google"  # Style Google pour les docstrings
+
+# ============================================================================
+# CONFIGURATION MYPY - Type checking
+# ============================================================================
+[tool.mypy]
+python_version = "3.11"
+
+# Niveau de strictness modéré
+check_untyped_defs = true
+disallow_untyped_defs = false      # Pas obligatoire partout
+disallow_incomplete_defs = true
+disallow_untyped_calls = false     # Pas trop strict
+warn_return_any = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+
+# Plugins
+plugins = ["pydantic.mypy"]
+
+# Ignorer les imports manquants pour certaines bibliothèques
+[[tool.mypy.overrides]]
+module = [
+    "jose.*",
+    "passlib.*",
+    "pymongo.*",
+    "motor.*",
+    "beanie.*",
+    "sklearn.*",
+    "torch.*",
+    "torchvision.*",
+    "xgboost.*",
+    "airflow.*",
+    "mlflow.*",
+    "prometheus_client.*",
+    "grafana_client.*",
+]
+ignore_missing_imports = true
+
+# ============================================================================
+# CONFIGURATION PYTEST - Testing
+# ============================================================================
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = [
+    "-ra",
+    "--strict-markers",
+    "--cov=src",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+testpaths = ["tests"]
+pythonpath = ["src"]
+asyncio_mode = "auto"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# ============================================================================
+# CONFIGURATION COVERAGE - Couverture de code
+# ============================================================================
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "**/__init__.py", "scripts/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
