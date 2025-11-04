@@ -26,7 +26,7 @@ RUN uv pip install --system --no-cache \
     .
 
 # Copier les DAGs
-COPY --chown=airflow:root airflow/dags /opt/airflow/dags
+COPY --chown=airflow:root src/airflow/dags /opt/src/airflow/dags
 
 # Copier le script d'initialisation custom
 COPY --chown=airflow:root docker/airflow/init-airflow.sh /opt/airflow/init-airflow.sh

@@ -26,7 +26,7 @@ COPY docker/mongodb/setup-database.py /docker-entrypoint-initdb.d/02-setup.py
 COPY docker/mongodb/indexes.json /docker-entrypoint-initdb.d/indexes.json
 
 # Copier la configuration MongoDB
-COPY docker/mongodb/mongod.yaml /etc/mongod.conf
+COPY docker/mongodb/mongodb.yaml /etc/mongod.conf
 
 # Rendre les scripts exécutables
 RUN chmod +x /docker-entrypoint-initdb.d/01-init.sh
