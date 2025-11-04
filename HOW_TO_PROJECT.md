@@ -4,14 +4,58 @@
 
 ## 1️⃣ Workflow quotidien avec UV et GIT
 
+### -----------------------------
+## COMMANDES PRINCIPALES
+### 
 ### Démarrage matin (tous les jours)
+### -----------------------------
+
+#### On se met dans son projet
 cd <mon_projet>
+
+#### Partie Git
+#### On rapatrie l'historique des changements du master
 git fetch
+# On bifurque sur la branche
 git checkout <ma_branche> || git checkout -b <ma_branche> origin/<ma_branche>
+# On met à jour avec le master distant
 git pull --rebase origin master
+
+#### Partie UV
+#### !!!! A faire uniquement la première fois !!!!
 uv venv
+
+#### Démarrage de l'environnement virtuel uv
 source .venv/bin/activate
+
+#### Synchronisation avec toutes les dépendances
 uv sync --extra all
+### OU
+#### Synchronisation partielle avec certaines dépendances uniquement
+uv sync --extra api --extra database --extra monitoring
+
+### -----------------------------
+
+### -----------------------------
+### Fin de journée (push pour PR)
+
+#### Status pour voir tous les changements de la branche 
+git status
+
+#### Ajout de tous les fichiers modifiés à l'historique local (.) ou alors on précise les fichiers
+git add .
+
+####  On verrouille les modifications dans l'historique local
+git commit -m "Mon avancement du jour sur <ma_branche>"
+
+####  On rapatrie les modifications du master distant
+git pull --rebase origin master
+
+####  On pousse tous les changements sur la branche distante
+git push -u origin <ma_branche>
+### -----------------------------
+
+### COMMANDES OPTIONNELLES SUR BESOIN
 
 ### Ajouter une dépendance (si besoin pendant le dev)
 uv add <package>
@@ -23,12 +67,6 @@ uv remove <package>
 git add pyproject.toml uv.lock
 git commit -m "chore: retire <package>"
 
-### Fin de journée (push pour PR)
-git add .
-git status
-git commit -m "Mon avancement du jour sur <ma_branche>"
-git pull --rebase origin master
-git push -u origin <ma_branche>
 
 ### Installation par groupes spécifiques (répéter --extra)
 uv sync --extra api --extra database --extra monitoring
@@ -63,6 +101,9 @@ docker compose pull
 docker compose ps
 docker compose logs -f
 docker compose stats
+
+### Démarrer avec un docker-compose spécifique
+docker compose -f docker-compose-ETL.yml up -d
 
 ### Démarrer tous les services
 docker compose up -d
@@ -225,7 +266,7 @@ git checkout <branch_prenom>
 git fetch origin
 # Branchement sur master
 git checkout master
-# # On realigne local/distant
+# # On realigne local/distant du master
 git pull origin master
 # On rebascule sur sa branche
 git checkout branch_sebastien
