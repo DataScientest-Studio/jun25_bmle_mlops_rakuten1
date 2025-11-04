@@ -7,7 +7,18 @@ services:
       context: .
       dockerfile: docker/clean_data/Dockerfile
     container_name: mlops-clean_data
+    volumes:
+      - ./data/raw:/data/raw
+      - ./data/cleaned:/data/cleaned
 
-  volumes:
-    - ./data/raw:/data/raw
-    - ./data/cleaned:/data/cleaned
+  # ==========================================================================
+  # ETL - Data Preprocessing
+  # ==========================================================================
+  preprocessing:
+    build:
+      context: .
+      dockerfile: docker/preprocess_data/Dockerfile
+    container_name: mlops-preprocess_data
+    volumes:
+      - ./data/cleaned:/data/cleaned
+      - ./data/preprocessed:/data/preprocessed
