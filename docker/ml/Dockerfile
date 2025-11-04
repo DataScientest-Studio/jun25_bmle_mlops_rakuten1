@@ -32,11 +32,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml README.md ./
 
 # Installation avec les extras corrects (RÉPÉTER --extra)
-RUN uv pip install --system --no-cache \
-    --extra datascience \
-    --extra database \
-    --extra mlflow-client \
-    .
+RUN uv pip install --system --no-cache  .[datascience,database,mlflow-client]
 
 # Créer les répertoires pour les données et modèles
 RUN mkdir -p /app/data/raw /app/data/preprocessed /app/data/processed /app/models /app/notebooks

@@ -19,11 +19,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY --chown=airflow:root pyproject.toml README.md ./
 
 # Installation avec les extras corrects (RÉPÉTER --extra)
-RUN uv pip install --system --no-cache \
-    --extra airflow \
-    --extra database \
-    --extra mlflow-client \
-    .
+RUN uv pip install --system --no-cache  .[airflow,database,mlflow-client]
 
 # Copier les DAGs
 COPY --chown=airflow:root src/airflow/dags /opt/src/airflow/dags
