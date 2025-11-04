@@ -217,3 +217,17 @@ git diff master origin/master
 
 ---
 Ce workflow améliore la lisibilité, facilite la collaboration et réduit les conflits lors du travail en équipe sur un projet Git.
+
+# Résumé des commandes git suite à la PR
+### Sur sa branche
+git checkout <branch_prenom>
+# Mise à jour historique des changements distants
+git fetch origin
+# Branchement sur master
+git checkout master
+# # On realigne local/distant
+git pull origin master
+# On rebascule sur sa branche
+git checkout branch_sebastien
+# On realigne local/distant
+git pull --rebase origin master
