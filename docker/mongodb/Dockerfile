@@ -1,4 +1,4 @@
-FROM mongo:7.0
+FROM python:3.11-slim
 
 LABEL maintainer="MLOps Rakuten Team"
 LABEL description="MongoDB NoSQL Database pour MLOps Rakuten"
@@ -16,9 +16,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY pyproject.toml README.md ./
 
 # Installer uniquement les dépendances database (pymongo, motor, beanie)
-RUN uv pip install --system --no-cache \
-    --extra database \
-    .
+RUN uv pip install --system --no-cache  .[database]
 
 # Copier les scripts d'initialisation
 COPY docker/mongodb/init-mongodb.sh /docker-entrypoint-initdb.d/01-init.sh
