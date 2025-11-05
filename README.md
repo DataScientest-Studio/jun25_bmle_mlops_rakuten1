@@ -139,14 +139,14 @@ Project Organization
 ---
 
 ## 📅 Roadmap
-
+'''
 05 Nov              12 Nov              19 Nov              29 Nov              10 Déc              17 Déc
 |==================|===================|===================|===================|===================|
 └─ Phase 1 ────────┘└─ Phase 2 ────────┘└─ Phase 3 ────────┘└─ Phase 4 ────────┘└─ Phase 5 ────────┘
 |Fondations         │Microservices      │Orchestration      │Monitoring         │Frontend
 |                   |Suivi & Versionning│Déploiement        │Maintenance        │
 |                   |                   │                   │(OPTIONNEL)        │
-
+'''
 
 ### Planning détaillé
 
