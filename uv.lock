@@ -2121,6 +2121,7 @@ dev = [
 ]
 etl = [
     { name = "beautifulsoup4" },
+    { name = "numpy" },
     { name = "pandas" },
     { name = "scikit-learn" },
     { name = "tqdm" },
@@ -2182,6 +2183,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.7.0,<2.0.0" },
     { name = "numpy", marker = "extra == 'all'", specifier = ">=1.26.0,<2.0.0" },
     { name = "numpy", marker = "extra == 'datascience'", specifier = ">=1.26.0,<2.0.0" },
+    { name = "numpy", marker = "extra == 'etl'", specifier = ">=1.26.0,<2.0.0" },
     { name = "pandas", marker = "extra == 'all'", specifier = ">=2.1.0,<2.3.0" },
     { name = "pandas", marker = "extra == 'datascience'", specifier = ">=2.1.0,<2.3.0" },
     { name = "pandas", marker = "extra == 'etl'", specifier = "==2.1.0" },
