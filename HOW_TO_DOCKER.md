@@ -1,8 +1,6 @@
-# 📦 Guide spécifique pour les bonnes pratiques Docker pour le projet
+# 📦 Docker pour le projet
 
----
-
-## 1. Comment développer en mode container
+## 1. Structure du projet
 
 On attend pour faciliter la lisibité du projet et les developpements/deploiements de suivre une architecture type :
 
@@ -39,50 +37,50 @@ Vous trouvez avec example, un exemple de composant, avec :
 3. Un dossier docker/example avec son fichier Dockerfile
    
 
-## 2 Docker Compose - Gestion multi-services
+## 2. Docker Compose - Gestion multi-services
 
-### Démarrer tous les services
+### 2.1 Démarrer tous les services
 ```
 docker compose up -d
 ```
 
-### Démarrer avec un docker-compose spécifique
+### 2.2 Démarrer avec un docker-compose spécifique
 ```
 docker compose -f docker-compose-data.yml up -d
 ```
 
-Cette ligne permet de lancer la creation du container de l'image spéfique contenu dans le docker-compose-data.yml.
-Cela permet donc d'isoler dans une image précise un composant particulier et de créer le container afférent
-On pourra par la suite dans un docker-compose.yml global au projet y faire référence directement via le yml du composant.
+> Cette ligne permet de lancer la creation de l'image spéfique, contenue dans le docker-compose-data.yml et de lancer son container.
+> Cela permet donc d'isoler un composant particulier.
+> 
+> On pourra par la suite, dans un docker-compose.yml global au projet, y faire référence directement via le yml du composant (cf.dernièr partie).
 
-### Démarrer services spécifiques (exemples courants)
-### Lancement depuis le docker-compose.yml des services souhaités
+### 2.3 Démarrer des services spécifiques (exemples courants)
 ```
 docker compose up -d api mongodb mlflow-server postgres minio
 docker compose up -d ml-worker
 docker compose up -d airflow-webserver airflow-scheduler airflow-postgres
 ```
-### On lance depuis le fichier docker-compose-data des services extract et transform définis
+### 2.3 Démarrer des services spécifiques d'un composant spécifique
 ```
 docker compose -f docker-compose-data.yml up -d extract transform
 ```
 
-### A savoir
+## 3. A savoir (Pour la culture, on passera par docker compose systématiquement pour combiner build et run)
 
-### Build et rebuild
+### 3.1 Build et rebuild
 ```
 docker compose build
 ```
-### build d'un service spécifique
+### 3.2 build d'un service spécifique
 ```
 docker compose build api
 ```
-### Forcer le build complet, sans vérification de cache
+### 3.3 Forcer le build complet, sans vérification de cache
 ```
 docker compose build --no-cache ml-worker
 ```
 
-### Gestion et maintenance
+### 3.4 Gestion et maintenance
 ```
 docker compose stop
 docker compose stop api
@@ -95,15 +93,22 @@ docker compose logs -f api
 docker compose logs -f ml-worker
 ```
 
-### DOCKER (orchestration)
-| Commande | Usage |
-|----------|-------|
-| `docker compose up -d` | Démarrer tous les services |
-| `docker compose up -d api mongodb` | Démarrer services spécifiques |
-| `docker compose logs -f <service>` | Voir logs en direct |
-| `docker compose down -v` | Tout arrêter et reset |
+### 3.5 Nettoyage
+```
+# Arrêter et supprimer le container
+docker compose -f docker-compose-etl.yml down
 
-## 🌐 URLs des services
+# Supprimer l'image
+docker rmi mlops-rakuten/clean-data:latest
+
+# Nettoyer les images intermédiaires (builder stages)
+docker image prune -f
+
+# Nettoyer TOUT (containers arrêtés, images, volumes, cache)
+docker system prune -a --volumes
+```
+
+## 🌐 URLs des services docker communs
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
@@ -116,11 +121,13 @@ docker compose logs -f ml-worker
 | MinIO Console | http://localhost:9001 | minio / minio123456 |
 | MongoDB | mongodb://localhost:27017 | admin / changeme |
 
-## Evolution dans la suite, un Dockerfile optimisé !
+## 4. Evolution dans la suite :
 
-Pour faire un build puis un run, de façon à avoir un container optimisé avec uniquement les ressources nécessaires.
-Le container sera plus rapide à déployer et beaucoup plus rapide en execution.
-On construit une fois, on execute x fois !
+### 4.1 un Dockerfile optimisé !
+
+> Pour faire un build puis un run, de façon à avoir un container optimisé avec uniquement les ressources nécessaires.
+> Le container sera plus rapide à déployer et beaucoup plus rapide en execution.
+> On construit une fois, on execute x fois !
 
 ```
 # ============================================================================
@@ -273,135 +280,7 @@ CMD ["python", "src/data/clean_data.py"]
 # ════════════════════════════════════════════════════════════════════════════
 ```
 
-🚀 Commandes de lancement
-1️⃣ Build et lancement avec docker-compose (RECOMMANDÉ)
-
-```
-# ══════════════════════════════════════════════════════════════════════════
-# Construction et lancement avec docker-compose --> Préférence !
-# ══════════════════════════════════════════════════════════════════════════
-
-# Build + lancement en mode attaché (voir les logs en temps réel)
-docker compose -f docker-compose-etl.yml up --build
-
-# Build + lancement en mode détaché (arrière-plan)
-docker compose -f docker-compose-etl.yml up --build -d
-
-# Voir les logs si lancé en mode détaché
-docker compose -f docker-compose-etl.yml logs -f cleaning
-
-# Arrêter le container
-docker compose -f docker-compose-etl.yml down
-
-# Rebuild complet (sans cache) + lancement
-docker compose -f docker-compose-etl.yml build --no-cache
-docker compose -f docker-compose-etl.yml up
-```
-
-2️⃣ Build manuel avec docker build
-
-```
-# ══════════════════════════════════════════════════════════════════════════
-# Construction manuelle de l'image (depuis la racine du projet) --> Pour le savoir
-# ══════════════════════════════════════════════════════════════════════════
-
-# Build normal
-docker build \
-  -f docker/clean_data/Dockerfile \
-  -t mlops-rakuten/clean-data:latest \
-  .
-
-# Build sans cache (force rebuild complet)
-docker build \
-  --no-cache \
-  -f docker/clean_data/Dockerfile \
-  -t mlops-rakuten/clean-data:latest \
-  .
-
-# Build avec affichage détaillé (debug)
-docker build \
-  --progress=plain \
-  -f docker/clean_data/Dockerfile \
-  -t mlops-rakuten/clean-data:latest \
-  .
-```
-
-3️⃣ Lancement manuel avec docker run
-
-```
-# ══════════════════════════════════════════════════════════════════════════
-# Lancement manuel du container (après build) --> Pour le savoir
-# ══════════════════════════════════════════════════════════════════════════
-
-# Lancement avec volumes montés
-docker run --rm \
-  --name mlops-clean-data \
-  -v "$(pwd)/data/raw:/app/data/raw:ro" \
-  -v "$(pwd)/data/cleaned:/app/data/cleaned" \
-  mlops-rakuten/clean-data:latest
-
-# Lancement en mode interactif (pour debug)
-docker run --rm -it \
-  --name mlops-clean-data \
-  -v "$(pwd)/data/raw:/app/data/raw:ro" \
-  -v "$(pwd)/data/cleaned:/app/data/cleaned" \
-  mlops-rakuten/clean-data:latest \
-  bash
-
-# Dans le container interactif, vérifier:
-ls -la /app/data/raw/
-python src/data/clean_data.py
-exit
-```
-
-4️⃣ Inspection et debug
-
-```
-# ══════════════════════════════════════════════════════════════════════════
-# Commandes d'inspection et debug
-# ══════════════════════════════════════════════════════════════════════════
-
-# Vérifier la taille des images (comparer builder vs runtime)
-docker images | grep mlops-rakuten
-
-# Inspecter l'image finale
-docker inspect mlops-rakuten/clean-data:latest
-
-# Voir l'historique des layers (identifier les plus lourds)
-docker history mlops-rakuten/clean-data:latest
-
-# Analyser la taille des layers avec dive (installer: https://github.com/wagoodman/dive)
-dive mlops-rakuten/clean-data:latest
-
-# Entrer dans un container en cours d'exécution
-docker exec -it mlops-clean-data bash
-
-# Vérifier les logs du container
-docker logs mlops-clean-data
-
-# Vérifier l'utilisation des ressources
-docker stats mlops-clean-data
-```
-
-5️⃣ Nettoyage
-
-```
-# ══════════════════════════════════════════════════════════════════════════
-# Nettoyage des ressources Docker
-# ══════════════════════════════════════════════════════════════════════════
-
-# Arrêter et supprimer le container
-docker compose -f docker-compose-etl.yml down
-
-# Supprimer l'image
-docker rmi mlops-rakuten/clean-data:latest
-
-# Nettoyer les images intermédiaires (builder stages)
-docker image prune -f
-
-# Nettoyer TOUT (containers arrêtés, images, volumes, cache)
-docker system prune -a --volumes
-```
+> Les gains :
 
 | Aspect            | Dockerfile Simple                    | Dockerfile Multi-stage          |
 | ----------------- | ------------------------------------ | ------------------------------- |
@@ -412,24 +291,7 @@ docker system prune -a --volumes
 | Temps déploiement | Lent (image lourde)                  | Rapide (image légère)           |
 | Cache Docker      | Efficace                             | Très efficace (layers séparés)  |
 
-✅ En résumé, le Workflow recommandé
-
-```
-# 1. Développement (build rapide avec cache)
-docker compose -f docker-compose-etl.yml up --build
-
-# 2. Test d'un changement de code (rebuild rapide)
-docker compose -f docker-compose-etl.yml up --build
-
-# 3. Production (build complet sans cache)
-docker compose -f docker-compose-etl.yml build --no-cache
-docker compose -f docker-compose-etl.yml up -d
-
-# 4. Vérifier les logs
-docker compose -f docker-compose-etl.yml logs -f cleaning
-```
-
-## Fichier docker-compose global avec les include pour les docker-compose-composant.yml
+### 4.2 Fichier docker-compose global avec les include pour les docker-compose-composant.yml
 
 ```
 # ============================================================================
@@ -461,4 +323,4 @@ networks:
     driver: bridge
 ```
 
-Bien plus simple non !
+> Bien plus simple non !
