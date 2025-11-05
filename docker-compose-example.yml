@@ -1,0 +1,35 @@
+# ==========================================================================
+# Example - Fichier example basé sur l'architecture suivante :
+# dossier /docker/example
+# fichier /docker/example/Dockerfile pour la définition du l'image du composant
+# fichier /src/example/yyyyy.py se rapportant au composant example.
+# Ceci pour assurer la coherence de nommage suivante :
+# src/composant/*.py 
+# docker/composant/* 
+# docker-compose-composant.yml
+# ==========================================================================
+services:
+  # Nom du service = nom du composant. Si sous dossier, ca peut etre composant_souscomposant
+  example: 
+    # contexte de construction de l'image pour docker, le point de départ pour l'arborescence des repertoires locaux
+    build: 
+      # se refere au dossier dans lequel se trouve le docker-compose qui est utilisé pour l'image
+      # Ici, on part du dossier dans lequel est contenu le docker-compose, donc la racine du projet
+      context: .  
+      # emplacement du Dockerfile par rapport au context. 
+      # ici, on part de . (donc la racine projet) et on ajoute le chemin du paramtre dockerfile (docker/clean_data/Dockerfile))
+      # donc ./docker/clean_data/Dockerfile  
+      dockerfile: docker/clean_data/Dockerfile  
+    # Nom du container lancé par docker
+    container_name: mlops-clean_data
+    # définition des volumes pour la persistance des données
+    # lien entre les repertoires locaux et les repertoires du container.
+    volumes:
+      # Monter les volumes dans /app/data
+      # Ici on monte dans /app/data dans le container, car on va copier les fichiers sources *.py dans /app dans le Dockerfile
+      # Afin de respecter la definition des imports projets (ex import src/data/xxx.py) et la recherche des données dans un /data relatif 
+      # au fichier python, on doit garder /app pour le container en haut de l'arborescence et ajouter les autres dossiers en tant que sous dossier.
+      - ./data/raw:/app/data/raw:ro           # :ro = read-only pour sécurité
+      - ./data/preprocessed:/app/data/preprocessed # read-write for preprocessed outputs
+      - ./data/processed:/app/data/processed # read-write for processed_output
+
