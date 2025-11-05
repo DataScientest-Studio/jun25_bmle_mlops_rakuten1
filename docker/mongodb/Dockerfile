@@ -1,22 +1,7 @@
-FROM python:3.11-slim
+FROM mongo:7.0
 
 LABEL maintainer="MLOps Rakuten Team"
 LABEL description="MongoDB NoSQL Database pour MLOps Rakuten"
-
-# Installer Python
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copier et installer uv
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
-# Copier pyproject.toml pour installer les dépendances database
-COPY pyproject.toml README.md ./
-
-# Installer uniquement les dépendances database (pymongo, motor, beanie)
-RUN uv pip install --system --no-cache  .[database]
 
 # Copier les scripts d'initialisation
 COPY docker/mongodb/init-mongodb.sh /docker-entrypoint-initdb.d/01-init.sh
