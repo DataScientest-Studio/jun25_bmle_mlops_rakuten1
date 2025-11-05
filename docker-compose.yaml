@@ -196,10 +196,10 @@ services:
     networks:
       - mlops-network
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-      - airflow_data:/opt/airflow
+      - ./data/airflow/dags:/opt/airflow/dags
+      - ./data/airflow/logs:/opt/airflow/logs
+      - ./data/airflow/plugins:/opt/airflow/plugins
+      - ./data/airflow:/opt/airflow
     entrypoint: ["/bin/bash"]
     command:
       - -c
@@ -240,10 +240,10 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-      - airflow_data:/opt/airflow
+      - ./data/airflow/dags:/opt/airflow/dags
+      - ./data/airflow/logs:/opt/airflow/logs
+      - ./data/airflow/plugins:/opt/airflow/plugins
+      - ./data/airflow:/opt/airflow
     command: webserver
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
@@ -280,10 +280,10 @@ services:
     networks:
       - mlops-network
     volumes:
-      - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/logs:/opt/airflow/logs
-      - ./airflow/plugins:/opt/airflow/plugins
-      - airflow_data:/opt/airflow
+      - ./data/airflow/dags:/opt/airflow/dags
+      - ./data/airflow/logs:/opt/airflow/logs
+      - ./data/airflow/plugins:/opt/airflow/plugins
+      - ./data/airflow:/opt/airflow
     command: scheduler
     healthcheck:
       test: ["CMD-SHELL", "airflow jobs check --job-type SchedulerJob --hostname \"$${HOSTNAME}\""]
@@ -380,7 +380,7 @@ volumes:
     name: mlops-postgres-data
   minio_data:
     name: mlops-minio-data
-  airflow_data:
+  airflow:
     name: mlops-airflow-data
   airflow_postgres_data:
     name: mlops-airflow-postgres-data

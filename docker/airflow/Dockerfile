@@ -22,7 +22,7 @@ COPY --chown=airflow:root pyproject.toml README.md ./
 RUN uv pip install --system --no-cache  .[airflow,database,mlflow-client]
 
 # Copier les DAGs
-COPY --chown=airflow:root src/airflow/dags /opt/src/airflow/dags
+COPY --chown=airflow:root src/airflow/dags /opt/airflow/dags
 
 # Copier le script d'initialisation custom
 COPY --chown=airflow:root docker/airflow/init-airflow.sh /opt/airflow/init-airflow.sh
