@@ -11,9 +11,9 @@ output_dir = "/data/cleaned"
 
 
 # Chargement des fichiers CSV
-X_train = pd.read_csv(os.path.join(input_dir, "empty.csv"))
-y_train = pd.read_csv(os.path.join(input_dir, "empty.csv"))
-X_test = pd.read_csv(os.path.join(input_dir, ".csv"))
+X_train = pd.read_csv(os.path.join(input_dir, "X_train_update.csv"))
+y_train = pd.read_csv(os.path.join(input_dir, "Y_train_CVw08PX.csv"))
+X_test = pd.read_csv(os.path.join(input_dir, "X_test_update.csv"))
 
 # Renommage de la première colonne en "id"
 X_train.rename(columns={X_train.columns[0]: "id"}, inplace=True)
