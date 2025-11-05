@@ -1,12 +1,12 @@
 services:
   # ==========================================================================
-  # ETL - Data Cleaning
+  # Data - Data services (preprocessing)
   # ==========================================================================
   cleaning:
     build:
       context: .
-      dockerfile: docker/clean_data/Dockerfile
-    container_name: mlops-clean_data
+      dockerfile: docker/data/Dockerfile
+    container_name: mlops-data
     volumes:
       # Monter les volumes dans /app/data (pas /data !)
       - ./data/raw:/app/data/raw:ro           # :ro = read-only pour sécurité
