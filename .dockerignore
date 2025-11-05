@@ -1,0 +1,80 @@
+# ============================================================================
+# EXCLUSIONS DOCKER - Architecture microservices
+# Objectif: Containers légers, rapides, et indépendants
+# ============================================================================
+
+# ── DONNÉES ET RÉSULTATS (LOURD !) ──
+data/                    # Données brutes/traitées (via volumes)
+models/                  # Modèles ML sauvegardés (via volumes)
+logs/                    # Logs (via volumes ou système de logging)
+list/                    # Dossier list à ignorer
+references/
+reports/
+
+# ── NOTEBOOKS ET EXPLORATION ──
+notebooks/               # Jupyter notebooks (dev uniquement)
+*.ipynb
+.ipynb_checkpoints/
+
+# ── CACHE PYTHON ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# ── ENVIRONNEMENTS VIRTUELS ──
+venv/
+.venv/
+env/
+ENV/
+.conda/
+
+# ── IDE ET ÉDITEURS ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── GIT ──
+.git/
+.gitignore
+.gitattributes
+
+# ── TESTS ET CI/CD ──
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+
+# ── DOCUMENTATION ──
+docs/
+*.md
+!README.md              # Garde uniquement README.md si besoin
+
+# ── DOCKER LUI-MÊME ──
+docker/                 # Dockerfiles d'autres services
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+.docker/
+
+# ── CONFIGURATION ET SECRETS ──
+.env                    # Secrets (passés via env vars)
+.env.*
+*.pem
+*.key
+secrets/
+
+# ── FICHIERS TEMPORAIRES ──
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp

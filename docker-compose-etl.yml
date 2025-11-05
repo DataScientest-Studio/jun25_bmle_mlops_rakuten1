@@ -1,0 +1,14 @@
+services:
+  # ==========================================================================
+  # ETL - Data Cleaning
+  # ==========================================================================
+  cleaning:
+    build:
+      context: .
+      dockerfile: docker/clean_data/Dockerfile
+    container_name: mlops-clean_data
+    volumes:
+      # Monter les volumes dans /app/data (pas /data !)
+      - ./data/raw:/app/data/raw:ro           # :ro = read-only pour sécurité
+      - ./data/cleaned:/app/data/cleaned      # read-write pour les outputs
+

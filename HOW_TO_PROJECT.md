@@ -103,7 +103,7 @@ docker compose logs -f
 docker compose stats
 
 ### Démarrer avec un docker-compose spécifique
-docker compose -f docker-compose-ETL.yml up -d
+docker compose -f docker-compose-etl.yml up -d
 
 ### Démarrer tous les services
 docker compose up -d

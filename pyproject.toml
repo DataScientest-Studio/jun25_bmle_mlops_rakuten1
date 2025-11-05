@@ -31,6 +31,7 @@ dependencies = [
 # ============================================================================
 etl = [
     "pandas==2.1.0",  # 2.1+ supporte bien Python 3.11
+    "numpy>=1.26.0,<2.0.0",  # Ajout pour compatibilité binaire avec pandas
     "beautifulsoup4==4.11.2",  # 4.11.2 supporte bien Python 3.11
     "tqdm>=4.66.0,<5.0.0",  # Pour barres de progression
     "scikit-learn>=1.3.0,<2.0.0",  # 1.3+ optimisé pour Python 3.11
@@ -230,9 +231,25 @@ all = [
     "mkdocs-material>=9.5.0,<10.0.0",
 ]
 
+# ============================================================================
+# BUILD SYSTEM - Configuration pour rendre le package installable
+# Cette section permet à uv/pip d'installer le projet avec 'pip install -e .'
+# et de reconnaître 'src' comme un package Python importable
+# ============================================================================
 [build-system]
 requires = ["setuptools>=68.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
+
+# ============================================================================
+# CONFIGURATION SETUPTOOLS - Package discovery
+# Permet à Python de reconnaître 'src' comme un package installable
+# et de pouvoir faire: from src.data.clean_text import clean_text
+# ============================================================================
+[tool.setuptools]
+packages = ["src"]  # Indique que 'src' est un package Python
+
+[tool.setuptools.package-dir]
+"" = "."  # Les packages sont à la racine du projet
 
 # ============================================================================
 # CONFIGURATION RUFF - Linting et formatting
