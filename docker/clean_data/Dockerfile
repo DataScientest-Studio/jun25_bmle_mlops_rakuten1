@@ -9,9 +9,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 COPY ../../pyproject.toml ./
 
 # Installation avec les extras corrects (RÉPÉTER --extra)
-RUN uv pip install --system --no-cache \
-    --extra etl \
-    .
+RUN uv pip install --system --no-cache .[etl]
 
 COPY ./src/data/clean_data.py ./src/data/clean_text.py /app/
 
