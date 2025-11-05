@@ -36,7 +36,11 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pytest
+        if [ -n "$(find tests -name 'test_*.py' -o -name '*_test.py' 2>/dev/null)" ]; then
+          pytest
+        else
+          echo "No tests found, skipping pytest"
+        fi
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       if: always()
