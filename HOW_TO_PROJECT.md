@@ -30,10 +30,10 @@ source .venv/bin/activate
 
 # Synchronisation 
 # Avec toutes les dépendances
-uv sync --extra all
+uv sync .[all]
 # OU
 # Partielle, avec certaines dépendances uniquement
-uv sync --extra api --extra database --extra monitoring
+uv sync .[api, database, monitoring]
 ```
 
 ### Fin de journée (push pour PR)
