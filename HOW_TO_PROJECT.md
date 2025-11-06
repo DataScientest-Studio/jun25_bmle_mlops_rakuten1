@@ -30,10 +30,14 @@ source .venv/bin/activate
 
 # Synchronisation 
 # Avec toutes les dépendances
-uv sync .[all]
+uv sync --extra all 
+# OU Si pip est bien sur le binaire sur .venv (which pip doit pointer sur le .venv\bin\pip)
+pip install -e .[all]
 # OU
 # Partielle, avec certaines dépendances uniquement
-uv sync .[api, database, monitoring]
+uv sync --extra api --extra database --extra monitoring 
+# OU Si pip est bien sur le binaire sur .venv (which pip doit pointer sur le .venv\bin\pip)
+pip install -e .[api, database, monitoring] 
 ```
 
 ### Fin de journée (push pour PR)
