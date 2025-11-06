@@ -33,7 +33,7 @@ jobs:
     - name: Synchronize dependencies (all extras) with uv
       run: |
         source .venv/bin/activate
-        uv sync .[all]
+        uv sync --extra all
 
     - name: Lint and format with ruff
       run: |
