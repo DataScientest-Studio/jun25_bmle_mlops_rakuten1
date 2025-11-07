@@ -19,6 +19,18 @@ connection_string = f"mongodb://{MONGO_ADMIN_USER}:{MONGO_ADMIN_PASSWORD}@{MONGO
 #client = MongoClient(connection_string)
 client = connect_to_mongodb()
 
+def clean_one_row(designation, description, image):
+    designation = clean_text(designation)
+    description = clean_text(description)
+    img_byte_arr = io.BytesIO()
+    image = image.convert("RGB").resize(IMAGE_SIZE)
+    image.save(img_byte_arr, format='JPEG')
+    img_bytes = img_byte_arr.getvalue()
+
+    doc = {"designation": designation,
+           "description": description,
+           "image_binary": img_bytes}
+    return doc
 
 # Dossiers d'entrée et de sortie
 input_dir = os.path.join("data", "raw")
@@ -42,17 +54,14 @@ X_test.rename(columns={X_test.columns[0]: "id"}, inplace=True)
 y_train.rename(columns={y_train.columns[0]: "id"}, inplace=True)
 
 # Nettoyage des colonnes texte avec la fonction clean_text
-X_train["designation"] = X_train["designation"].apply(clean_text)
-X_test["designation"] = X_test["designation"].apply(clean_text)
-X_train["description"] = X_train["description"].apply(clean_text)
-X_test["description"] = X_test["description"].apply(clean_text)
+#X_train["designation"] = X_train["designation"].apply(clean_text)
+#X_test["designation"] = X_test["designation"].apply(clean_text)
+#X_train["description"] = X_train["description"].apply(clean_text)
+#X_test["description"] = X_test["description"].apply(clean_text)
 
-# Sauvegarde des fichiers nettoyés
-X_train.to_csv(os.path.join(output_dir, "X_train_cleaned.csv"), index=False)
-X_test.to_csv(os.path.join(output_dir, "X_test_cleaned.csv"), index=False)
-y_train.to_csv(os.path.join(output_dir, "Y_train_cleaned.csv"), index=False)
 
-db.X_train.delete_many({}) 
+
+db.X_train.delete_many({})
 db.X_test.delete_many({})
 db.Y_train.delete_many({})
 
@@ -60,26 +69,24 @@ for _, row in X_train.iterrows():
     image_filename = str("image_" + str(row["imageid"] + "product_" + row["productid"]) + ".jpg")
     image_path = os.path.join(images_dir, "image_train", image_filename)
     if os.path.exists(image_path):
-        # Ouvrir et redimensionner l'image avec PIL (comme avant)
-        img = Image.open(image_path).convert("RGB").resize(IMAGE_SIZE)
-        img_byte_arr = io.BytesIO()
-        img.save(img_byte_arr, format='JPEG')
-        img_bytes = img_byte_arr.getvalue()
-
-        # Construire document à insérer (ajouter toutes colonnes du dataframe)
-        doc = row.to_dict()
-        doc["image_binary"] = img_bytes
-#        doc["imageid"] = imageid  # remplace productid + imageid colonne séparée
-#        doc.pop("productid", None)
-        
+        doc = clean_one_row(row["designation"], row["description"], Image.open(image_path))
+        doc["id"] = row["id"]
         db.X_train_cleaned.insert_one(doc)
     else:
         print(f"Image non trouvée : {image_filename}")
 
 
 
-db.X_train_cleaned.insert_many(X_train.to_dict("records"))
-db.X_test_cleaned.insert_many(X_test.to_dict("records"))
-db.Y_train_cleaned.insert_many(y_train.to_dict("records"))
+
+
+#db.X_train_cleaned.insert_many(X_train.to_dict("records"))
+#db.X_test_cleaned.insert_many(X_test.to_dict("records"))
+#db.Y_train_cleaned.insert_many(y_train.to_dict("records"))
+
 
 client.close()
+
+# Sauvegarde des fichiers nettoyés
+#X_train.to_csv(os.path.join(output_dir, "X_train_cleaned.csv"), index=False)
+#X_test.to_csv(os.path.join(output_dir, "X_test_cleaned.csv"), index=False)
+#y_train.to_csv(os.path.join(output_dir, "Y_train_cleaned.csv"), index=False)
