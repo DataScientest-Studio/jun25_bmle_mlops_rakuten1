@@ -10,7 +10,8 @@ from datetime import datetime, timezone
 
 # Imports des utilitaires dans src/mongodb/
 from src.mongodb.conf_loader import MongoConfLoader
-from src.mongodb.mongo_utils import MongoUtils
+from src.mongodb.utils import MongoUtils
+
 
 def main():
     """
@@ -31,6 +32,7 @@ def main():
         # Lire et afficher le dernier document inséré
         last_doc = mongo.db["data_log"].find_one(sort=[("timestamp", -1)])
         print("Dernier document dans 'data_log' :", last_doc)
+
 
 if __name__ == "__main__":
     main()
