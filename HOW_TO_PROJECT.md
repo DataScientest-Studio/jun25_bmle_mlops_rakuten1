@@ -27,6 +27,8 @@ uv venv
 
 # Démarrage de l'environnement virtuel uv
 source .venv/bin/activate
+# Pour Windows
+.venv\Scripts\activate
 
 # Synchronisation 
 # Avec toutes les dépendances
