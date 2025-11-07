@@ -1,22 +1,11 @@
-FROM mongo:7.0
+# Image officielle MongoDB version 7.x
+FROM mongo:7
 
-LABEL maintainer="MLOps Rakuten Team"
-LABEL description="MongoDB NoSQL Database pour MLOps Rakuten"
+# Copie la configuration MongoDB personnalisée (depuis le répertoire conf du projet)
+COPY conf/mongodb.yaml /etc/mongod.conf
 
-# Copier les scripts d'initialisation
-COPY docker/mongodb/init-mongodb.sh /docker-entrypoint-initdb.d/01-init.sh
-COPY docker/mongodb/setup-database.py /docker-entrypoint-initdb.d/02-setup.py
-COPY docker/mongodb/indexes.json /docker-entrypoint-initdb.d/indexes.json
+# (Optionnel) S’assure que le dossier des logs existe et appartient à l’utilisateur MongoDB
+RUN mkdir -p /var/log/mongodb && chown -R mongodb:mongodb /var/log/mongodb
 
-# Copier la configuration MongoDB
-COPY docker/mongodb/mongodb.yaml /etc/mongod.conf
-
-# Rendre les scripts exécutables
-RUN chmod +x /docker-entrypoint-initdb.d/01-init.sh
-RUN chmod +x /docker-entrypoint-initdb.d/02-setup.py
-
-# Créer le répertoire pour les logs MongoDB
-RUN mkdir -p /var/log/mongodb && \
-    chown -R mongodb:mongodb /var/log/mongodb
-
-EXPOSE 27017
+# Démarre mongod en utilisant le fichier de configuration personnalisé
+CMD ["mongod", "--config", "/etc/mongod.conf"]

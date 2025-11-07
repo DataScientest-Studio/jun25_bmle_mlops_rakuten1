@@ -1,0 +1,51 @@
+services:
+  mongodb:
+    # Utilise le Dockerfile personnalisé pour MongoDB
+    build:
+      context: .
+      dockerfile: docker/mongodb/Dockerfile
+
+    # Nom du conteneur pour le service MongoDB
+    container_name: mongodb7
+
+    # Redémarre le conteneur sauf si on l'arrête explicitement
+    restart: unless-stopped
+
+    # Définit les utilisateurs Mongo "root" par des secrets (sécurisé)
+    environment:
+      MONGO_INITDB_ROOT_USERNAME_FILE: /run/secrets/mongo_admin_user    # Fichier contenant le login root
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_admin_pass   # Fichier contenant le mot de passe root
+
+    # Expose le port MongoDB standard du conteneur vers l'hôte (localhost:27017)
+    ports:
+      - "27017:27017"
+
+    # Monte les volumes :
+    # - ./logs : répertoire local pour stocker les logs MongoDB
+    # - ./conf : répertoire local contenant la configuration MongoDB (lecture seule)
+    volumes:
+      - ./logs:/var/log/mongodb
+      - ./conf:/conf:ro
+
+    # Définit le chemin du fichier de configuration mongod (copié par le Dockerfile)
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+
+    # Déclare les secrets utilisés pour init root
+    secrets:
+      - mongo_admin_user
+      - mongo_admin_pass
+
+    # Met le service sur un réseau dédié, permet de s'y connecter depuis d'autres containers
+    networks:
+      - mlops-network
+
+networks:
+  mlops-network:
+    driver: bridge
+
+# Déclare les secrets Docker qui seront montés dans le conteneur
+secrets:
+  mongo_admin_user:
+    file: ./conf/mongodb-users.username         # Fichier contenant uniquement le login (ex : 'admin')
+  mongo_admin_pass:
+    file: ./conf/mongodb-users.password        # Fichier contenant uniquement le mot de passe

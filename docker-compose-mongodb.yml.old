@@ -1,0 +1,41 @@
+services:
+  # ==========================================================================
+  # DATABASE - MongoDB avec setup complet
+  # ==========================================================================
+  mongodb:
+    build:
+      context: .
+      dockerfile: docker/mongodb/Dockerfile
+    container_name: mlops-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-changeme}
+      MONGO_INITDB_DATABASE: mlops_rakuten
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_logs:/var/log/mongodb
+      - mongodb_config:/data/configdb
+    networks:
+      - mlops-network
+    ports:
+      - "27017:27017"
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  mlops-network:
+    driver: bridge
+    name: mlops-network
+
+volumes:
+  mongodb_data:
+    name: mlops-mongodb-data
+  mongodb_logs:
+    name: mlops-mongodb-logs
+  mongodb_config:
+    name: mlops-mongodb-config

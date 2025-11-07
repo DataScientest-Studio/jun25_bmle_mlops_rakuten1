@@ -54,13 +54,13 @@ docker compose -f docker-compose-data.yml up -d
 > 
 > On pourra par la suite, dans un docker-compose.yml global au projet, y faire référence directement via le yml du composant (cf.dernièr partie).
 
-### 2.3 Démarrer des services spécifiques (exemples courants)
+### 2.3 Démarrer des services spécifiques (exemples courants) en arrière plan (-d)
 ```
 docker compose up -d api mongodb mlflow-server postgres minio
 docker compose up -d ml-worker
 docker compose up -d airflow-webserver airflow-scheduler airflow-postgres
 ```
-### 2.3 Démarrer des services spécifiques d'un composant spécifique
+### 2.3 Démarrer des services spécifiques d'un composant spécifique en arrière plan
 ```
 docker compose -f docker-compose-data.yml up -d extract transform
 ```
@@ -106,6 +106,89 @@ docker image prune -f
 
 # Nettoyer TOUT (containers arrêtés, images, volumes, cache)
 docker system prune -a --volumes
+```
+
+### Synthèse et explications détaillées des commandes principales
+```
+# =========
+# BASIQUE
+# =========
+
+docker compose up
+# → Build si nécessaire (cache utilisé)
+# → Lance tous les services définis dans 'docker-compose.yml' (ou 'compose.yaml' si présent)
+
+docker compose up service1 service2
+# → Build si nécessaire (cache utilisé), lance SEULEMENT 'service1' et 'service2'
+
+docker compose -f mon-compose.yml up
+# → Utilise un fichier Compose personnalisé (ex: 'mon-compose.yml')
+
+
+# =========
+# AVEC BUILD FORCE
+# =========
+
+docker compose up --build            # Build forcé de tous les services puis run (cache autorisé)
+docker compose up --build service1   # Build forcé de service1 (cache autorisé) puis run
+
+docker compose -f mon-compose.yml up --build service1
+# → Build forcé du service1 défini dans ce compose perso (cache autorisé), puis run service1
+
+# =========
+# AVEC BUILD TOTAL SANS CACHE
+# =========
+
+docker compose build --no-cache
+# → Rebuild TOUTES les images de tous les services depuis zéro, SANS cache docker.
+# (mais ne démarre pas les containers)
+# → Si l'image de base (FROM) n'est pas locale, elle est téléchargée.
+# → Si elle est locale : elle est réutilisée, sauf si --pull.
+
+docker compose build --no-cache --pull
+# → Idem, mais force EN PLUS la récupération de la dernière version de chaque image de base sur le registry (pas juste le local)
+
+docker compose build --no-cache service1 service2
+# → Ne rebuild que les services ciblés sans cache
+
+docker compose up service1 service2
+# → Démarre les services après un build séparé (utile après la commande build --no-cache ci-dessus)
+
+# =========
+# TOUT EN UNE LIGNE ("one shot")
+# =========
+
+docker compose up --build --no-cache
+# → Build tous les services SANS AUCUN CACHE, puis les lance tous
+# (l'image de base est téléchargée si absente localement, sinon utilisée telle quelle SANS update depuis le registry)
+
+docker compose up --build --no-cache --pull
+# → Build sans aucun cache ET force le téléchargement des dernières versions d'images de base (FROM) du registry, même si elles sont déjà présentes localement
+
+docker compose -f mon-compose.yml up --build --no-cache service1 service2
+# → Tout ce qui précède, mais avec un fichier compose personnalisé et seulement pour 'service1' et 'service2'
+
+# =========
+# AUTRES OPTIONS UTILES
+# =========
+
+docker compose up -d
+# → Mode détaché (en arrière-plan)
+
+docker compose down
+# → Arrête et supprime les containers (mais pas les images ni les volumes persistants)
+
+docker compose build
+# → Build uniquement (pas de lancement)
+
+docker compose pull
+# → Télécharge toutes les images FROM du compose file, même si aucun build n’est encore déclenché
+
+docker compose logs -f service1
+# → Suivre les logs d'un service en temps réel
+
+docker compose rm -s
+# → Supprimer les containers arrêtés de tous les services
 ```
 
 ## 🌐 URLs des services docker communs
