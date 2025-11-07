@@ -17,7 +17,7 @@ DEFAULT_MONGO_CONF = {
         "path": "/var/log/mongodb/mongod.log",
         "logAppend": True,
     },
-    "net": {"port": 27017, "bindIp": "0.0.0.0"},
+    "net": {"port": 27017, "bindIp": "127.0.0.1"},
 }
 
 
@@ -60,11 +60,7 @@ class MongoConfLoader:
         result = default.copy()
         for key, value in override.items():
             # Fusion récursive si les valeurs sont elles-mêmes des dicts
-            if (
-                key in result
-                and isinstance(result[key], dict)
-                and isinstance(value, dict)
-            ):
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
                 result[key] = MongoConfLoader._deep_merge_dict(result[key], value)
             else:
                 result[key] = value

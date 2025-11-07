@@ -39,15 +39,9 @@ class MongoUtils:
         # Résolution des paramètres de connexion (priorité décroissante)
         self.mongo_host = host or self.config.get("net", {}).get("bindIp", "localhost")
         self.mongo_port = port or self.config.get("net", {}).get("port", 27017)
-        self.mongo_admin_user = (
-            admin_user or os.getenv("MONGO_INITDB_ROOT_USERNAME", "admin")
-        )
-        self.mongo_admin_password = (
-            admin_pass or os.getenv("MONGO_INITDB_ROOT_PASSWORD", "changeme")
-        )
-        self.mongo_db_name = (
-            db_name or os.getenv("MONGO_INITDB_DATABASE", "mlops_rakuten")
-        )
+        self.mongo_admin_user = admin_user or os.getenv("MONGO_INITDB_ROOT_USERNAME", "rakuten")
+        self.mongo_admin_password = admin_pass or os.getenv("MONGO_INITDB_ROOT_PASSWORD", "rakuten")
+        self.mongo_db_name = db_name or os.getenv("MONGO_INITDB_DATABASE", "mlops_rakuten")
         self.client = None
         self.db = None
 
