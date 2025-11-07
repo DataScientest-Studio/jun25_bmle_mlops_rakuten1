@@ -28,12 +28,14 @@ X_test["text"] = (
     X_test["designation"].fillna("") + " " + X_test["description"].fillna("")
 )
 
-print("Fitting TF-IDF vectorizer...")
+print("Fitting TF-IDF vectorizer Train...")
 tfidf_x_train = tfidf.fit_transform(X_train["text"]).toarray().tolist()
+print("Fitting TF-IDF Train complete...")
 #print("OK")
 #"""
+print("Fitting TF-IDF vectorizer Test...")
 tfidf_x_test = tfidf.transform(X_test["text"]).toarray().tolist()
-print("TF-IDF transformation complete.")
+print("TF-IDF transformation Test complete.")
 json_x_train = []
 for idx, prod_id, img_id, vect in zip(X_train["id"], X_train["productid"], X_train["imageid"], tfidf_x_train):
     json_x_train.append({
