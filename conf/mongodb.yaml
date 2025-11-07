@@ -1,0 +1,18 @@
+# === Emplacement des données persistantes ===
+storage:
+  dbPath: /data/db            # Chemin interne du conteneur où MongoDB stocke ses données
+
+# === Configuration des logs système ===
+systemLog:
+  destination: file           # Indique d’écrire les logs dans un fichier (et non STDOUT)
+  path: /var/log/mongodb/mongod.log  # Emplacement des logs (mappé sur ./logs du host côté Compose)
+  logAppend: true             # Ajoute les nouveaux logs à la suite du fichier existant
+
+# === Configuration réseau ===
+net:
+  port: 27017                 # Port d’écoute de MongoDB (standard)
+  bindIp: 0.0.0.0             # Écoute sur toutes les interfaces réseau du conteneur (permet l'accès depuis l’extérieur via Compose)
+
+# === Sécurité, paramétrage supplémentaire (désactivés/minimal ici) ===
+#security:
+#  authorization: enabled     # Active ou non le contrôle d'accès utilisateur (déjà géré si root user)
