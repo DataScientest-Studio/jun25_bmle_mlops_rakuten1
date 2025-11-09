@@ -5,10 +5,27 @@ services:
   cleaning:
     build:
       context: .
-      dockerfile: docker/data/Dockerfile
-    container_name: mlops-data
+      dockerfile: docker/data/cleaning/Dockerfile
+    container_name: mlops-data-cleaning
     volumes:
       # Monter les volumes dans /app/data (pas /data !)
       - ./data/raw:/app/data/raw:ro           # :ro = read-only pour sécurité
-      - ./data/cleaned:/app/data/cleaned      # read-write pour les outputs
+    # Met le service sur un réseau dédié, permet de s'y connecter depuis d'autres containers
+    networks:
+      - mlops-network
 
+  preprocessing:
+    build:
+      context: .
+      dockerfile: docker/data/preprocessing/Dockerfile
+    container_name: mlops-data-preprocessing
+    volumes:
+      # Monter les volumes dans /app/data (pas /data !)
+      - ./data/cleaned:/app/data/cleaned      # read-write pour les outputs
+    networks:
+      - mlops-network
+
+
+networks:
+  mlops-network:
+    driver: bridge
