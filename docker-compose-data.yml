@@ -21,7 +21,7 @@ services:
     container_name: mlops-data-preprocessing
     volumes:
       # Monter les volumes dans /app/data (pas /data !)
-      - ./data/cleaned:/app/data/cleaned      # read-write pour les outputs
+      - ./data/processed:/app/data/processed      # read-write pour les outputs
     networks:
       - mlops-network
 
