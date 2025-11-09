@@ -1,16 +1,31 @@
+import html
 import io
 import os
+import re
+import warnings
 
 import pandas as pd
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
 from PIL import Image
-
-from src.data.clean_text import clean_text
-from src.mongodb.conf_loader import MongoConfLoader
-from src.mongodb.utils import MongoUtils
 from tqdm.auto import tqdm
 
+from src.mongodb.conf_loader import MongoConfLoader
+from src.mongodb.utils import MongoUtils
+
+
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 IMAGE_SIZE = (224, 224)
+
+
+def clean_text(text):
+    if not isinstance(text, str):
+        return ""
+    text = BeautifulSoup(text, "html.parser").get_text(" ")
+    text = html.unescape(text)
+    text = re.sub(r"[^A-Za-zÀ-ÖØ-öø-ÿ0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip().lower()
+    return text
 
 
 def clean_one_row(designation, description, image):
@@ -26,11 +41,11 @@ def clean_one_row(designation, description, image):
 
 
 # Dossiers d'entrée et de sortie
-input_dir = os.path.join("data", "raw")
-images_dir = os.path.join("data", "raw", "images", "images")
-output_dir = os.path.join("data", "cleaned")
-# input_dir = "/data/raw"
-# images_dir = "/data/raw/images/images"
+# input_dir = os.path.join("data", "raw")
+# images_dir = os.path.join("data", "raw", "images", "images")
+# output_dir = os.path.join("data", "cleaned")
+input_dir = "/app/data/raw"
+images_dir = "/app/data/raw/images/images"
 # output_dir = "/data/cleaned"
 
 # Chargement des fichiers CSV
@@ -48,17 +63,19 @@ y_train.rename(columns={y_train.columns[0]: "id"}, inplace=True)
 # Connexion/context manager "with" assure ouverture/fermeture clean
 print("Connexion à MongoDB et insertion des données nettoyées...")
 conf_loader = MongoConfLoader()
-with MongoUtils(conf_loader=conf_loader) as mongo:
-    db = mongo.db["mlops_rakuten"]
-    print("purge des collections existantes...")
-    db.X_train_cleaned.delete_many({})
-    db.X_test_cleaned.delete_many({})
-    db.Y_train_cleaned.delete_many({})
+with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
+    X_train_cleaned = mongo.db["X_train_cleaned"]
+    X_test_cleaned = mongo.db["X_test_cleaned"]
 
-    for _, row in tqdm(
-        X_train.iterrows(),
+    print("purge des collections existantes...")
+    X_train_cleaned.delete_many({})
+    X_test_cleaned.delete_many({})
+
+    # Nettoyage et insertion des données d'entraînement
+    for index, row in tqdm(
+        X_train.head(1000).iterrows(),
         desc="Nettoyage et insertion X_train",
-        total=len(X_train),
+        total=len(X_train.head(1000)),
     ):
         image_filename = (
             "image_" + str(row["imageid"]) + "_product_" + str(row["productid"]) + ".jpg"
@@ -66,26 +83,32 @@ with MongoUtils(conf_loader=conf_loader) as mongo:
         image_path = os.path.join(images_dir, "image_train", image_filename)
         if os.path.exists(image_path):
             img = Image.open(image_path)
-            #            print("Image size:", img.size)
             doc = clean_one_row(row["designation"], row["description"], Image.open(image_path))
             doc["id"] = row["id"]
-            #            print("Doc keys:", doc.keys())
-            #            print("Doc image_binary size:", len(doc["image_binary"]))
-            db.X_train_cleaned.insert_one(doc)
-        #            print(db.X_train_cleaned.count_documents({}))
+            doc["prdtypecode"] = int(y_train.loc[index, "prdtypecode"])
+            X_train_cleaned.insert_one(doc)
 
         else:
             print(f"Image non trouvée : {image_filename}")
 
-    print("Taille de la collection X_train_cleaned :", db.X_train_cleaned.count_documents({}))
-    result = db.X_train_cleaned.find({}).limit(3)
-    for doc in result:
-        print("Document ID:", doc["id"])
-        img_bytes = doc["image_binary"]
-        img_byte_arr = io.BytesIO(img_bytes)
-        img = Image.open(img_byte_arr)
-        img.show()
+    # Nettoyage et insertion des données de test
+    for _, row in tqdm(
+        X_test.head(1000).iterrows(),
+        desc="Nettoyage et insertion X_test",
+        total=len(X_test.head(1000)),
+    ):
+        image_filename = (
+            "image_" + str(row["imageid"]) + "_product_" + str(row["productid"]) + ".jpg"
+        )
+        image_path = os.path.join(images_dir, "image_test", image_filename)
+        if os.path.exists(image_path):
+            img = Image.open(image_path)
+            doc = clean_one_row(row["designation"], row["description"], Image.open(image_path))
+            doc["id"] = row["id"]
+            X_test_cleaned.insert_one(doc)
 
+        else:
+            print(f"Image non trouvée : {image_filename}")
 
 # db.X_train_cleaned.insert_many(X_train.to_dict("records"))
 # db.X_test_cleaned.insert_many(X_test.to_dict("records"))
