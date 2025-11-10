@@ -13,7 +13,9 @@ class rakuten_api:
         self.JWT_SECRET_KEY = "mlops_project"
         self.JWT_ALGORITHM = "HS256"
 
-        self.docker = DockerClient(compose_files=["docker-compose-data.yml"])
+        self.docker_data = DockerClient(compose_files=["docker-compose-data.yml"])
+        self.docker_train = DockerClient(compose_files=["docker-compose-train.yml"])
+        self.docker_predict = DockerClient(compose_files=["docker-compose-predict.yml"])
 
         self.router = APIRouter()
         self.router.add_api_route("/", self.verify, methods=["POST"])
@@ -82,7 +84,7 @@ class rakuten_api:
                 token = base64.b64decode(token).decode("utf-8")
             if token:
                 self.verify_jwt_token(token)
-                self.docker.compose.up(services=["cleaning"], detach=True)
+                self.docker_data.compose.up(services=["cleaning"], detach=True)
                 return JSONResponse(status_code=200, content={"detail": "La connexion a réussi"})
             else:
                 return JSONResponse(
@@ -103,7 +105,7 @@ class rakuten_api:
                 token = base64.b64decode(token).decode("utf-8")
             if token:
                 self.verify_jwt_token(token)
-                self.docker.compose.up(services=["preprocessing"], detach=True)
+                self.docker_data.compose.up(services=["preprocessing"], detach=True)
                 return JSONResponse(status_code=200, content={"detail": "La connexion a réussi"})
             else:
                 return JSONResponse(status_code=400, content={"detail": "La prédiction a échoué"})
@@ -122,6 +124,7 @@ class rakuten_api:
                 token = base64.b64decode(token).decode("utf-8")
             if token:
                 self.verify_jwt_token(token)
+                self.docker_train.compose.up(services=["trainer"], detach=True)
                 return JSONResponse(status_code=200, content={"detail": "La connexion a réussi"})
             else:
                 return JSONResponse(status_code=400, content={"detail": "L'entrainement a échoué"})
