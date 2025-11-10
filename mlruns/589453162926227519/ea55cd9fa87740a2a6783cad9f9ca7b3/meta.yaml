@@ -1,0 +1,14 @@
+artifact_uri: file:///home/marc/programme/mlops/jun25_bmle_mlops_rakuten1/notebooks/../mlruns/589453162926227519/ea55cd9fa87740a2a6783cad9f9ca7b3/artifacts
+end_time: 1762779136080
+entry_point_name: ''
+experiment_id: '589453162926227519'
+lifecycle_stage: active
+run_id: ea55cd9fa87740a2a6783cad9f9ca7b3
+run_name: train_xgb_fusion
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1762779123774
+status: 3
+tags: []
+user_id: root
