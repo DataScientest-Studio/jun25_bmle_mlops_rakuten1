@@ -11,6 +11,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Copier la configuration et le code source
 COPY pyproject.toml ./
 COPY src/ /app/src/
+COPY models/resnet50-weights.pth /app/models/resnet50-weights.pth
 
 # Installation en mode éditable avec l'extra etl
 RUN uv pip install --system --no-cache -e .[etl]
