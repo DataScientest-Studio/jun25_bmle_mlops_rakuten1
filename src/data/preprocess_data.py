@@ -107,6 +107,12 @@ with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
         X_test_data.append(doc)
     df_test = pd.DataFrame(X_test_data)
 
+df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
+X = df_train[["text", "image_binary"]]
+y = df_train["prdtypecode"].values
+
+X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
+
 # Preparation TF-IDF
 tfidf = TfidfVectorizer(
     max_features=20000,  # limite stricte
@@ -115,19 +121,20 @@ tfidf = TfidfVectorizer(
     min_df=2,  # ignorer termes rares
 )
 tqdm.pandas(desc="TF-IDF vectorizer : Fitting and transforming Train")
-df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
-tfidf = tfidf.fit(tqdm(df_train["text"], desc="Fitting TF-IDF"))
+# df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
+tfidf = tfidf.fit(tqdm(X_train["text"], desc="Fitting TF-IDF"))
 joblib.dump(tfidf, "data/processed/tfidf_vectorizer.joblib")
 
 preprocessor = Preprocessor(tfidf=tfidf, batch_size=32)
-X_tfidf, X_img = preprocessor.preprocess_data(df_train)
+X_train_text, X_train_img = preprocessor.preprocess_data(X_train)
+X_val_text, X_val_img = preprocessor.preprocess_data(X_val)
 
-X = hstack([X_tfidf, X_img])
-y = df_train["prdtypecode"].values
+# X = hstack([X_tfidf, X_img])
+# y = df_train["prdtypecode"].values
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
+# X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
 
-sparse.save_npz(os.path.join(output_dir, "X_train.npz"), X_train)
-sparse.save_npz(os.path.join(output_dir, "X_val.npz"), X_val)
+sparse.save_npz(os.path.join(output_dir, "X_train.npz"), X_train_text)
+sparse.save_npz(os.path.join(output_dir, "X_val.npz"), X_val_text)
 np.save(os.path.join(output_dir, "y_train.npy"), y_train)
 np.save(os.path.join(output_dir, "y_val.npy"), y_val)
