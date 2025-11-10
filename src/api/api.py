@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime, timedelta
+from python_on_whales import DockerClient
 
 import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Request
@@ -11,9 +12,14 @@ class rakuten_api:
         self.users_db = {"user": "rakuten_project"}
         self.JWT_SECRET_KEY = "mlops_project"
         self.JWT_ALGORITHM = "HS256"
+
+        self.docker = DockerClient(compose_files=["docker-compose-data.yml"])
+
         self.router = APIRouter()
         self.router.add_api_route("/", self.verify, methods=["POST"])
         self.router.add_api_route("/login", self.login, methods=["POST"])
+        self.router.add_api_route("/clean", self.clean, methods=["POST"])
+        self.router.add_api_route("/preprocess", self.preprocess, methods=["POST"])
         self.router.add_api_route("/train", self.train, methods=["POST"])
         self.router.add_api_route("/predict", self.predict, methods=["POST"])
 
@@ -63,6 +69,46 @@ class rakuten_api:
             raise HTTPException(
                 status_code=500, detail="Une erreur est survenue lors de l'authentification"
             ) from None
+
+    def clean(self, request: Request):
+        try:
+            auth = request.headers.get("Authorization")
+            if not auth or (auth and not auth.startswith("Bearer")):
+                raise HTTPException(status_code=400, detail="Aucune authentification envoyé")
+
+            credentials = auth.split("Bearer ")[1]
+            token = credentials.strip()
+            if not token.startswith("ey"):
+                token = base64.b64decode(token).decode("utf-8")
+            if token:
+                self.verify_jwt_token(token)
+                self.docker.compose.up(services=["cleaning"], detach=True)
+                return JSONResponse(status_code=200, content={"detail": "La connexion a réussi"})
+            else:
+                return JSONResponse(
+                    status_code=400, content={"detail": "La fonction clean a échoué"}
+                )
+        except ValueError:
+            raise HTTPException(status_code=400, detail="La fonction clean a échoué") from None
+
+    def preprocess(self, request: Request):
+        try:
+            auth = request.headers.get("Authorization")
+            if not auth or (auth and not auth.startswith("Bearer")):
+                raise HTTPException(status_code=400, detail="Aucune authentification envoyé")
+
+            credentials = auth.split("Bearer ")[1]
+            token = credentials.strip()
+            if not token.startswith("ey"):
+                token = base64.b64decode(token).decode("utf-8")
+            if token:
+                self.verify_jwt_token(token)
+                self.docker.compose.up(services=["preprocessing"], detach=True)
+                return JSONResponse(status_code=200, content={"detail": "La connexion a réussi"})
+            else:
+                return JSONResponse(status_code=400, content={"detail": "La prédiction a échoué"})
+        except ValueError:
+            raise HTTPException(status_code=400, detail="La prédiction a échoué") from None
 
     def train(self, request: Request):
         try:
