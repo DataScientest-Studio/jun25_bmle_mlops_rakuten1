@@ -25,6 +25,9 @@ services:
       - ./models:/app/models:ro                   # read-only pour les models
     networks:
       - mlops-network
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
 
 
 networks:
