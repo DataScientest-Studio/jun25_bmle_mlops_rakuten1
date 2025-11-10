@@ -17,11 +17,18 @@ from tqdm.auto import tqdm
 from src.mongodb.conf_loader import MongoConfLoader
 from src.mongodb.utils import MongoUtils
 
+output_dir = os.path.join("data", "processed")
+input_model = os.path.join("models", "resnet50-weights.pth")
+
 
 class Preprocessor:
-    def __init__(self, tfidf=None, batch_size=32):
+    def __init__(self, tfidf=None, input_model=None, output_dir=None, batch_size=32):
+        if output_dir is None:
+            output_dir = os.path.join("data", "processed")
+        if input_model is None:
+            input_model = os.path.join("models", "resnet50-weights.pth")
         if tfidf is None:
-            self.tfidf = joblib.load("data/processed/tfidf_vectorizer.joblib")
+            self.tfidf = joblib.load(os.path.join(output_dir, "tfidf_vectorizer.joblib"))
         else:
             self.tfidf = tfidf
         self.preprocess = transforms.Compose(
@@ -31,7 +38,8 @@ class Preprocessor:
             ]
         )
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.resnet = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+        self.resnet = models.resnet50(weights=None)
+        self.resnet.load_state_dict(torch.load(input_model))
         self.resnet.fc = nn.Identity()
         self.batch_size = batch_size
 
@@ -62,14 +70,14 @@ class Preprocessor:
 
 
 # Dossiers d'entrée et de sortie
-output_dir = os.path.join("data", "processed")
+# output_dir = os.path.join("data", "processed")
 # print("result output dir:", output_dir)
 # output_dir = "/data/processed"
 
 # Recuperation des données depuis MongoDB
 conf_loader = MongoConfLoader()
 print("Connection à MongoDB...")
-with MongoUtils(conf_loader=conf_loader, host="localhost") as mongo:
+with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
     print("Connection à MongoDB établie.")
     X_train_cleaned_col = mongo.db["X_train_cleaned"]
     X_test_cleaned_col = mongo.db["X_test_cleaned"]
@@ -124,18 +132,21 @@ tfidf = TfidfVectorizer(
 tqdm.pandas(desc="TF-IDF vectorizer : Fitting and transforming Train")
 # df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
 tfidf = tfidf.fit(tqdm(X_train["text"], desc="Fitting TF-IDF"))
-joblib.dump(tfidf, "data/processed/tfidf_vectorizer.joblib")
+joblib.dump(tfidf, os.path.join(output_dir, "tfidf_vectorizer.joblib"))
 
-preprocessor = Preprocessor(tfidf=tfidf, batch_size=32)
+preprocessor = Preprocessor(
+    tfidf=tfidf, input_model=input_model, output_dir=output_dir, batch_size=32
+)
 X_train_text, X_train_img = preprocessor.preprocess_data(X_train)
 X_val_text, X_val_img = preprocessor.preprocess_data(X_val)
 
-# X = hstack([X_tfidf, X_img])
+X_train_full = hstack([X_train_text, X_train_img])
+X_val_full = hstack([X_val_text, X_val_img])
 # y = df_train["prdtypecode"].values
 
 # X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
 
-sparse.save_npz(os.path.join(output_dir, "X_train.npz"), X_train_text)
-sparse.save_npz(os.path.join(output_dir, "X_val.npz"), X_val_text)
+sparse.save_npz(os.path.join(output_dir, "X_train.npz"), X_train_full)
+sparse.save_npz(os.path.join(output_dir, "X_val.npz"), X_val_full)
 np.save(os.path.join(output_dir, "y_train.npy"), y_train)
 np.save(os.path.join(output_dir, "y_val.npy"), y_val)

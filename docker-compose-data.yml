@@ -22,6 +22,7 @@ services:
     volumes:
       # Monter les volumes dans /app/data (pas /data !)
       - ./data/processed:/app/data/processed      # read-write pour les outputs
+      - ./models:/app/models:ro                   # read-only pour les models
     networks:
       - mlops-network
 
