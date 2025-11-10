@@ -73,9 +73,9 @@ with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
 
     # Nettoyage et insertion des données d'entraînement
     for index, row in tqdm(
-        X_train.head(1000).iterrows(),
+        X_train.head(10000).iterrows(),
         desc="Nettoyage et insertion X_train",
-        total=len(X_train.head(1000)),
+        total=len(X_train.head(10000)),
     ):
         image_filename = (
             "image_" + str(row["imageid"]) + "_product_" + str(row["productid"]) + ".jpg"
