@@ -5,6 +5,10 @@ from python_on_whales import DockerClient
 import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+import pandas as pd
+
+from src.data.clean_data import clean_one_row
+from src.data.preprocess_data import Preprocessor
 
 
 class rakuten_api:
@@ -143,6 +147,14 @@ class rakuten_api:
                 token = base64.b64decode(token).decode("utf-8")
             if token:
                 self.verify_jwt_token(token)
+                # Préparation des données (ETL)
+                # X_test_update.csv
+                # result = clean_one_row(designation, description, image)
+                # df = pd.DataFrame(result)
+                # df["text"] = df["designation"].fillna("") + " " + df["description"].fillna("")
+                # preprocessor = Preprocessor()
+                # X_tfidf, X_img = preprocessor.preprocess_data(df)
+                # X_full = hstack([X_tfidf, X_img])
                 return JSONResponse(status_code=200, content={"detail": "La connexion a réussi"})
             else:
                 return JSONResponse(status_code=400, content={"detail": "La prédiction a échoué"})
