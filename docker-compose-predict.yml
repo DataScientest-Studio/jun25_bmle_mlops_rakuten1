@@ -1,0 +1,14 @@
+version: "3.9"
+
+services:
+  predictor:
+    build:
+      context: .
+      dockerfile: docker/predict/predict.Dockerfile
+    image: rakuten-predictor:latest
+    container_name: rakuten_predictor
+    volumes:
+      - ./data:/app/data        # accès aux modèles et npz
+      - ./src:/app/src
+    working_dir: /app
+    command: ["python", "-m", "api.predict"]

@@ -1,0 +1,6 @@
+artifact_location: file:///home/marc/programme/mlops/jun25_bmle_mlops_rakuten1/notebooks/../mlruns/589453162926227519
+creation_time: 1762769580153
+experiment_id: '589453162926227519'
+last_update_time: 1762769580153
+lifecycle_stage: active
+name: rakuten_xgb_fusion
