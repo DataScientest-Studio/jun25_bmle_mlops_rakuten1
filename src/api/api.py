@@ -7,8 +7,8 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 import pandas as pd
 
-from src.data.clean_data import clean_one_row
-from src.data.preprocess_data import Preprocessor
+# from src.data.clean_data import clean_one_row
+# from src.data.preprocess_data import Preprocessor
 
 
 class rakuten_api:
