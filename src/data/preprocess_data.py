@@ -62,13 +62,14 @@ class Preprocessor:
 
 
 # Dossiers d'entrée et de sortie
-# output_dir = os.path.join("data", "processed")
-output_dir = "/data/processed"
+output_dir = os.path.join("data", "processed")
+# print("result output dir:", output_dir)
+# output_dir = "/data/processed"
 
 # Recuperation des données depuis MongoDB
 conf_loader = MongoConfLoader()
 print("Connection à MongoDB...")
-with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
+with MongoUtils(conf_loader=conf_loader, host="localhost") as mongo:
     print("Connection à MongoDB établie.")
     X_train_cleaned_col = mongo.db["X_train_cleaned"]
     X_test_cleaned_col = mongo.db["X_test_cleaned"]
