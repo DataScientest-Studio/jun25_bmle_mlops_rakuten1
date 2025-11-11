@@ -123,7 +123,7 @@ def train():
         "tree_method": "hist",
     }
 
-    num_round = 200
+    num_round = 50
     evals_result = {}
 
     # === 4️⃣ Callback de progression ===
