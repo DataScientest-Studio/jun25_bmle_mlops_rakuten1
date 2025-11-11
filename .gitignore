@@ -91,4 +91,7 @@ data/*
 .mypy_cache/
 
 # Models
-models/mlruns/
+models/
+
+# Mlruns
+mlruns/
