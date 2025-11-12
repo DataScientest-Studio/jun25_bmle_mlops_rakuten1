@@ -7,8 +7,7 @@ from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 import pandas as pd
 
-from src.data.clean_data import clean_one_row
-from src.data.preprocess_data import Preprocessor
+from src.api.predict import predict_one
 
 
 class rakuten_api:
@@ -155,7 +154,10 @@ class rakuten_api:
                 # preprocessor = Preprocessor()
                 # X_tfidf, X_img = preprocessor.preprocess_data(df)
                 # X_full = hstack([X_tfidf, X_img])
-                return JSONResponse(status_code=200, content={"detail": "La connexion a réussi"})
+                result = predict_one()
+                return JSONResponse(
+                    status_code=200, content={"detail": "La connexion a réussi", "data": result}
+                )
             else:
                 return JSONResponse(status_code=400, content={"detail": "La prédiction a échoué"})
         except ValueError:
