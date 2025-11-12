@@ -17,9 +17,6 @@ from tqdm.auto import tqdm
 from src.mongodb.conf_loader import MongoConfLoader
 from src.mongodb.utils import MongoUtils
 
-output_dir = os.path.join("data", "processed")
-input_model = os.path.join("models", "resnet50-weights.pth")
-
 
 class Preprocessor:
     def __init__(self, tfidf=None, input_model=None, output_dir=None, batch_size=32):
@@ -69,84 +66,89 @@ class Preprocessor:
         return X_tfidf, X_img
 
 
-# Dossiers d'entrée et de sortie
-# output_dir = os.path.join("data", "processed")
-# print("result output dir:", output_dir)
-# output_dir = "/data/processed"
+def preprocess_data(
+    output_dir=os.path.join("data", "processed"),
+    input_model=os.path.join("models", "resnet50-weights.pth"),
+):
+    # Recuperation des données depuis MongoDB
+    conf_loader = MongoConfLoader()
+    print("Connection à MongoDB...")
+    with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
+        print("Connection à MongoDB établie.")
+        X_train_cleaned_col = mongo.db["X_train_cleaned"]
+        X_test_cleaned_col = mongo.db["X_test_cleaned"]
+        print("Recuperation des données de Train depuis MongoDB...")
+        X_train_cursor = X_train_cleaned_col.find(
+            {},
+            {
+                "_id": 0,
+                "id": 1,
+                "designation": 1,
+                "description": 1,
+                "prdtypecode": 1,
+                "image_binary": 1,
+            },
+        )
+        nb_docs_X_train = X_train_cleaned_col.count_documents({})
+        X_train_data = []
+        for doc in tqdm(X_train_cursor, total=nb_docs_X_train, desc="Chargement données Train"):
+            X_train_data.append(doc)
+        df_train = pd.DataFrame(X_train_data)
+        print("Recuperation des données de Test depuis MongoDB...")
+        X_test_cursor = X_test_cleaned_col.find(
+            {},
+            {
+                "_id": 0,
+                "id": 1,
+                "designation": 1,
+                "description": 1,
+                "image_binary": 1,
+            },
+        )
+        nb_docs_X_test = X_test_cleaned_col.count_documents({})
 
-# Recuperation des données depuis MongoDB
-conf_loader = MongoConfLoader()
-print("Connection à MongoDB...")
-with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
-    print("Connection à MongoDB établie.")
-    X_train_cleaned_col = mongo.db["X_train_cleaned"]
-    X_test_cleaned_col = mongo.db["X_test_cleaned"]
-    print("Recuperation des données de Train depuis MongoDB...")
-    X_train_cursor = X_train_cleaned_col.find(
-        {},
-        {
-            "_id": 0,
-            "id": 1,
-            "designation": 1,
-            "description": 1,
-            "prdtypecode": 1,
-            "image_binary": 1,
-        },
+        X_test_data = []
+        for doc in tqdm(X_test_cursor, total=nb_docs_X_test, desc="Chargement données Test"):
+            X_test_data.append(doc)
+        df_test = pd.DataFrame(X_test_data)
+
+    df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
+    X = df_train[["text", "image_binary"]]
+    y = df_train["prdtypecode"].values
+
+    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
+
+    # Preparation TF-IDF
+    tfidf = TfidfVectorizer(
+        max_features=20000,  # limite stricte
+        ngram_range=(1, 2),  # mots simples + bi-grammes
+        sublinear_tf=True,
+        min_df=2,  # ignorer termes rares
     )
-    nb_docs_X_train = X_train_cleaned_col.count_documents({})
-    X_train_data = []
-    for doc in tqdm(X_train_cursor, total=nb_docs_X_train, desc="Chargement données Train"):
-        X_train_data.append(doc)
-    df_train = pd.DataFrame(X_train_data)
-    print("Recuperation des données de Test depuis MongoDB...")
-    X_test_cursor = X_test_cleaned_col.find(
-        {},
-        {
-            "_id": 0,
-            "id": 1,
-            "designation": 1,
-            "description": 1,
-            "image_binary": 1,
-        },
+    tqdm.pandas(desc="TF-IDF vectorizer : Fitting and transforming Train")
+    # df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
+    tfidf = tfidf.fit(tqdm(X_train["text"], desc="Fitting TF-IDF"))
+    joblib.dump(tfidf, os.path.join(output_dir, "tfidf_vectorizer.joblib"))
+
+    preprocessor = Preprocessor(
+        tfidf=tfidf, input_model=input_model, output_dir=output_dir, batch_size=32
     )
-    nb_docs_X_test = X_test_cleaned_col.count_documents({})
+    X_train_text, X_train_img = preprocessor.preprocess_data(X_train)
+    X_val_text, X_val_img = preprocessor.preprocess_data(X_val)
 
-    X_test_data = []
-    for doc in tqdm(X_test_cursor, total=nb_docs_X_test, desc="Chargement données Test"):
-        X_test_data.append(doc)
-    df_test = pd.DataFrame(X_test_data)
+    X_train_full = hstack([X_train_text, X_train_img])
+    X_val_full = hstack([X_val_text, X_val_img])
+    # y = df_train["prdtypecode"].values
 
-df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
-X = df_train[["text", "image_binary"]]
-y = df_train["prdtypecode"].values
+    # X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
 
-X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
+    sparse.save_npz(os.path.join(output_dir, "X_train.npz"), X_train_full)
+    sparse.save_npz(os.path.join(output_dir, "X_val.npz"), X_val_full)
+    np.save(os.path.join(output_dir, "y_train.npy"), y_train)
+    np.save(os.path.join(output_dir, "y_val.npy"), y_val)
 
-# Preparation TF-IDF
-tfidf = TfidfVectorizer(
-    max_features=20000,  # limite stricte
-    ngram_range=(1, 2),  # mots simples + bi-grammes
-    sublinear_tf=True,
-    min_df=2,  # ignorer termes rares
-)
-tqdm.pandas(desc="TF-IDF vectorizer : Fitting and transforming Train")
-# df_train["text"] = df_train["designation"].fillna("") + " " + df_train["description"].fillna("")
-tfidf = tfidf.fit(tqdm(X_train["text"], desc="Fitting TF-IDF"))
-joblib.dump(tfidf, os.path.join(output_dir, "tfidf_vectorizer.joblib"))
 
-preprocessor = Preprocessor(
-    tfidf=tfidf, input_model=input_model, output_dir=output_dir, batch_size=32
-)
-X_train_text, X_train_img = preprocessor.preprocess_data(X_train)
-X_val_text, X_val_img = preprocessor.preprocess_data(X_val)
-
-X_train_full = hstack([X_train_text, X_train_img])
-X_val_full = hstack([X_val_text, X_val_img])
-# y = df_train["prdtypecode"].values
-
-# X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, stratify=y)
-
-sparse.save_npz(os.path.join(output_dir, "X_train.npz"), X_train_full)
-sparse.save_npz(os.path.join(output_dir, "X_val.npz"), X_val_full)
-np.save(os.path.join(output_dir, "y_train.npy"), y_train)
-np.save(os.path.join(output_dir, "y_val.npy"), y_val)
+if __name__ == "__main__":
+    output_dir = os.path.join("data", "processed")
+    input_model = os.path.join("models", "resnet50-weights.pth")
+    preprocess_data(output_dir=output_dir, input_model=input_model)
