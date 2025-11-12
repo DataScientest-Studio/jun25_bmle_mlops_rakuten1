@@ -19,13 +19,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copier pyproject.toml et installer les dépendances
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 
 # Installation avec les extras corrects (RÉPÉTER --extra)
-RUN uv pip install --system --no-cache .[api,database,monitoring,mlflow-client]
+RUN uv pip install --system --no-cache -e .[api,database,etl]
 
 # Copier le code source
-COPY ./src ./src
+COPY src/ /app/src/
 
 # Créer un utilisateur non-root
 RUN useradd -m -u 1000 appuser && \
