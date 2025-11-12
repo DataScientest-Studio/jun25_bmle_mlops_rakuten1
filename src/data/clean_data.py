@@ -40,7 +40,9 @@ def clean_one_row(designation, description, image):
     return doc
 
 
-def clean_data(input_dir="/app/data/raw", images_dir="/app/data/raw/images/images"):
+def clean_data(
+    input_dir="/app/data/raw", images_dir="/app/data/raw/images/images", nbre_lignes=1000
+):
     # Chargement des fichiers CSV
     print("Chargement des fichiers CSV...")
     X_train = pd.read_csv(os.path.join(input_dir, "X_train_update.csv"))
@@ -65,10 +67,11 @@ def clean_data(input_dir="/app/data/raw", images_dir="/app/data/raw/images/image
         X_test_cleaned.delete_many({})
 
         # Nettoyage et insertion des données d'entraînement
+        nbre_lignes = len(X_train) if nbre_lignes is None else nbre_lignes
         for index, row in tqdm(
-            X_train.head(10000).iterrows(),
+            X_train.head(nbre_lignes).iterrows(),
             desc="Nettoyage et insertion X_train",
-            total=len(X_train.head(10000)),
+            total=len(X_train.head(nbre_lignes)),
         ):
             image_filename = (
                 "image_" + str(row["imageid"]) + "_product_" + str(row["productid"]) + ".jpg"
@@ -86,9 +89,9 @@ def clean_data(input_dir="/app/data/raw", images_dir="/app/data/raw/images/image
 
         # Nettoyage et insertion des données de test
         for _, row in tqdm(
-            X_test.head(1000).iterrows(),
+            X_test.head(nbre_lignes).iterrows(),
             desc="Nettoyage et insertion X_test",
-            total=len(X_test.head(1000)),
+            total=len(X_test.head(nbre_lignes)),
         ):
             image_filename = (
                 "image_" + str(row["imageid"]) + "_product_" + str(row["productid"]) + ".jpg"
@@ -108,5 +111,5 @@ if __name__ == "__main__":
     # Dossiers d'entrée et de sortie
     input_dir = "/app/data/raw"
     images_dir = "/app/data/raw/images/images"
-
-    clean_data(input_dir=input_dir, images_dir=images_dir)
+    nbre_lignes = 1000
+    clean_data(input_dir=input_dir, images_dir=images_dir, nbre_lignes=nbre_lignes)
