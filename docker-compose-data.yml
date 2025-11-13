@@ -7,6 +7,8 @@ services:
       context: .
       dockerfile: docker/data/cleaning/Dockerfile
     container_name: mlops-data-cleaning
+    environment:
+      - MONGO_HOST=mongodb
     volumes:
       # Monter les volumes dans /app/data (pas /data !)
       - ./data/raw:/app/data/raw:ro           # :ro = read-only pour sécurité
@@ -19,6 +21,8 @@ services:
       context: .
       dockerfile: docker/data/preprocessing/Dockerfile
     container_name: mlops-data-preprocessing
+    environment:
+      - MONGO_HOST=mongodb
     volumes:
       # Monter les volumes dans /app/data (pas /data !)
       - ./data/processed:/app/data/processed      # read-write pour les outputs

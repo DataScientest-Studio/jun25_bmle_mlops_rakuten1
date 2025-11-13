@@ -73,7 +73,8 @@ def preprocess_data(
     # Recuperation des données depuis MongoDB
     conf_loader = MongoConfLoader()
     print("Connection à MongoDB...")
-    with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
+    mongo_host = os.getenv("MONGO_HOST", "localhost")
+    with MongoUtils(conf_loader=conf_loader, host=mongo_host) as mongo:
         print("Connection à MongoDB établie.")
         X_train_cleaned_col = mongo.db["X_train_cleaned"]
         X_test_cleaned_col = mongo.db["X_test_cleaned"]
