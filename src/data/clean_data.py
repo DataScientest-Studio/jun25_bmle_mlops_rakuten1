@@ -1,8 +1,10 @@
 import html
 import io
+import math
 import os
 import re
 import warnings
+from datetime import datetime
 
 import pandas as pd
 from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
@@ -58,7 +60,8 @@ def clean_data(
     # Connexion/context manager "with" assure ouverture/fermeture clean
     print("Connexion à MongoDB et insertion des données nettoyées...")
     conf_loader = MongoConfLoader()
-    with MongoUtils(conf_loader=conf_loader, host="mongodb") as mongo:
+    mongo_host = os.getenv("MONGO_HOST", "localhost")
+    with MongoUtils(conf_loader=conf_loader, host=mongo_host) as mongo:
         X_train_cleaned = mongo.db["X_train_cleaned"]
         X_test_cleaned = mongo.db["X_test_cleaned"]
 
@@ -79,7 +82,7 @@ def clean_data(
             image_path = os.path.join(images_dir, "image_train", image_filename)
             if os.path.exists(image_path):
                 img = Image.open(image_path)
-                doc = clean_one_row(row["designation"], row["description"], Image.open(image_path))
+                doc = clean_one_row(row["designation"], row["description"], img)
                 doc["id"] = row["id"]
                 doc["prdtypecode"] = int(y_train.loc[index, "prdtypecode"])
                 X_train_cleaned.insert_one(doc)
@@ -105,6 +108,39 @@ def clean_data(
 
             else:
                 print(f"Image non trouvée : {image_filename}")
+
+
+def calcul_lignes_a_lire(date_lancement: str) -> int:
+    """
+    Calcule le nombre de lignes à lire dans un fichier de données en fonction de la date de lancement.
+
+    La fonction interpolle linéairement entre 1000 lignes le 13 novembre 2025
+    et 85000 lignes le 13 décembre 2025.
+    Si la date fournie est avant le 13 novembre, retourne 1000.
+    Si elle est après le 13 décembre, retourne 85000.
+
+    Arguments:
+    date_lancement -- chaîne au format 'YYYY-MM-DD' représentant la date du jour de lancement.
+
+    Retour:
+    Le nombre entier de lignes à lire correspondant à la date donnée.
+    """
+
+    lignes_min = 1000
+    lignes_max = 85000
+    date_debut = datetime(2025, 11, 15)
+    date_fin = datetime(2025, 12, 13)
+    date_actuelle = datetime.strptime(date_lancement, "%Y-%m-%d")
+    jours_total = (date_fin - date_debut).days
+    jours_actuel = (date_actuelle - date_debut).days
+
+    if jours_actuel < 0:
+        return lignes_min
+    elif jours_actuel >= jours_total:
+        return lignes_max
+
+    lignes_a_lire = lignes_min + ((lignes_max - lignes_min) * jours_actuel / jours_total)
+    return math.ceil(lignes_a_lire)
 
 
 if __name__ == "__main__":
