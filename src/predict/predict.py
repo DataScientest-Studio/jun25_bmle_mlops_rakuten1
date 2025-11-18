@@ -68,12 +68,6 @@ print("📂 DATA_DIR :", DATA_DIR)
 print("📂 MODEL_DIR :", MODEL_DIR)
 print("📂 MLRUNS_DIR :", MLRUNS_DIR)
 
-# ---------- Config ----------
-# MODEL_DIR = os.getenv("MODEL_DIR", "models")
-# VECTORIZER_PATH = os.getenv("VECTORIZER_PATH", os.path.join(MODEL_DIR, "tfidf_vectorizer.joblib"))
-# MODEL_PATH = os.getenv("MODEL_PATH", os.path.join(MODEL_DIR, "xgb_fusion.json"))
-# ENCODER_PATH = os.getenv("ENCODER_PATH", os.path.join(MODEL_DIR, "label_encoder.joblib"))
-
 
 def predict(designation: str, description: str, image: Image) -> dict:
     print("📦 Chargement des artefacts...")
@@ -110,6 +104,8 @@ def predict(designation: str, description: str, image: Image) -> dict:
 
 # ---------- CLI ----------
 def main():
+    import time
+
     X_test = pd.read_csv(os.path.join(RAW_DIR, "X_test_update.csv"))
     row = X_test.sample(n=1)
     print(row)
@@ -125,9 +121,13 @@ def main():
     if os.path.exists(image_path):
         img = Image.open(image_path)
     img.show()
+    start = time.time()
     result = predict(row["designation"].values[0], row["description"].values[0], img)
 
     print("Retour predict : ", result)
+
+    end = time.time()
+    print(f"Temps d'exécution : {end - start} secondes")
 
 
 if __name__ == "__main__":
