@@ -219,26 +219,21 @@ def train():
         print(f"✅ Accuracy: {acc:.4f} | F1: {f1:.4f}")
         print("=== Rapport (résumé) ===")
         print(classification_report(y_val_enc, y_pred, digits=3)[:800])
-        print("1")
         mlflow.log_metrics({"accuracy": float(acc), "f1": float(f1)})
-        print("2")
 
         # === 7️⃣ Sauvegardes locales ===
         model_path = os.path.join(MODEL_DIR, "xgb_fusion.json")
         encoder_path = os.path.join(MODEL_DIR, "label_encoder.joblib")
         metrics_path = os.path.join(MODEL_DIR, "metrics_fusion.json")
-        print("3")
 
         bst.save_model(model_path)
         joblib.dump(encoder, encoder_path)
         json.dump({"accuracy": float(acc), "f1": float(f1)}, open(metrics_path, "w"))
-        print("4")
 
         # === 8️⃣ Logging MLflow des artefacts ===
         mlflow.xgboost.log_model(bst, artifact_path="xgb_model")
         mlflow.log_artifact(encoder_path, artifact_path="preprocessing")
         mlflow.log_artifact(metrics_path, artifact_path="metrics")
-        print("5")
 
     print("💾 Model saved:", model_path)
     print("✅ Training done successfully.")
