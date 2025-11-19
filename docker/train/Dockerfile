@@ -31,14 +31,14 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # Copier pyproject.toml et installer les dépendances
 COPY pyproject.toml ./
 
+# Copier le code source
+COPY src/ /app/src/
+
 # Installation avec les extras corrects (RÉPÉTER --extra)
-RUN uv pip install --system --no-cache  .[datascience,database,mlflow-client,etl]
+RUN uv pip install --system --no-cache -e .[etl,datascience,database,mlflow,api]
 
 # Créer les répertoires pour les données et modèles
 RUN mkdir -p /app/data/raw /app/data/preprocessed /app/data/processed /app/models /app/notebooks
-
-# Copier le code source
-COPY ./src ./src
 
 # Créer un utilisateur non-root
 # RUN useradd -m -u 1000 mluser && \
@@ -46,4 +46,5 @@ COPY ./src ./src
 # USER mluser
 
 # Point d'entrée par défaut
-CMD ["uvicorn", "src.api.train_api:entrainement", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+ENV PYTHONPATH=/app/src
+CMD ["uvicorn", "api.train_api:entrainement", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
