@@ -1,6 +1,5 @@
 import base64
 from datetime import datetime, timedelta
-from python_on_whales import DockerClient
 
 import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Request
