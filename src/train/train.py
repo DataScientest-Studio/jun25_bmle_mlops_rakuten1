@@ -98,7 +98,7 @@ MODEL_DIR = os.path.join(BASE_DIR, "models")
 MLRUNS_DIR = os.path.join(BASE_DIR, "mlruns")
 
 os.makedirs(MODEL_DIR, exist_ok=True)
-os.makedirs(MLRUNS_DIR, exist_ok=True)
+# os.makedirs(MLRUNS_DIR, exist_ok=True)
 
 print("📂 BASE_DIR :", BASE_DIR)
 print("📂 RAW_DIR :", RAW_DIR)
@@ -111,7 +111,9 @@ print("Configuration MLFlow ...")
 mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("rakuten_xgb_fusion")
 print("Configuration MinIO ...")
-endpoint_url = "http://localhost:9000"  # Adapte selon ton contexte (docker service ou localhost)
+endpoint_url = os.environ[
+    "MLFLOW_S3_ENDPOINT_URL"
+]  # Adapte selon ton contexte (docker service ou localhost)
 access_key = os.environ["AWS_ACCESS_KEY_ID"]
 secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
 bucket_name = "mlflow-artifacts"
