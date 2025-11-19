@@ -81,10 +81,16 @@ from tqdm.auto import tqdm
 from src.data.clean_data import calcul_lignes_a_lire, clean_data
 from src.data.preprocess_data import preprocess_data
 
+import boto3
+from botocore.client import Config
+
+os.environ["AWS_ACCESS_KEY_ID"] = "minioadmin"
+os.environ["AWS_SECRET_ACCESS_KEY"] = "minioadmin"
+os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://localhost:9000"
 
 # === 0️⃣ Gestion des chemins ===
 # Récupère la racine du projet, peu importe d'où on exécute le script
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+BASE_DIR = ""
 RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
 IMG_DIR = os.path.join(RAW_DIR, "images", "images")
 DATA_DIR = os.path.join(BASE_DIR, "data", "processed")
@@ -101,9 +107,32 @@ print("📂 DATA_DIR :", DATA_DIR)
 print("📂 MODEL_DIR :", MODEL_DIR)
 print("📂 MLRUNS_DIR :", MLRUNS_DIR)
 
-# 🔹 MLflow local : stocke les runs dans le dossier mlruns à la racine
-mlflow.set_tracking_uri(f"file:{MLRUNS_DIR}")
+print("Configuration MLFlow ...")
+mlflow.set_tracking_uri("http://localhost:5000")
 mlflow.set_experiment("rakuten_xgb_fusion")
+print("Configuration MinIO ...")
+endpoint_url = "http://localhost:9000"  # Adapte selon ton contexte (docker service ou localhost)
+access_key = os.environ["AWS_ACCESS_KEY_ID"]
+secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
+bucket_name = "mlflow-artifacts"
+
+# Mise en place du client S3 compatible MinIO
+s3 = boto3.client(
+    "s3",
+    endpoint_url=endpoint_url,
+    aws_access_key_id=access_key,
+    aws_secret_access_key=secret_key,
+    config=Config(signature_version="s3v4"),
+    region_name="us-east-1",
+)
+
+# Vérifie si le bucket existe
+existing_buckets = [bucket["Name"] for bucket in s3.list_buckets().get("Buckets", [])]
+if bucket_name not in existing_buckets:
+    s3.create_bucket(Bucket=bucket_name)
+    print(f"Bucket '{bucket_name}' créé.")
+else:
+    print(f"Bucket '{bucket_name}' existe déjà.")
 
 
 def train():
@@ -190,22 +219,26 @@ def train():
         print(f"✅ Accuracy: {acc:.4f} | F1: {f1:.4f}")
         print("=== Rapport (résumé) ===")
         print(classification_report(y_val_enc, y_pred, digits=3)[:800])
-
+        print("1")
         mlflow.log_metrics({"accuracy": float(acc), "f1": float(f1)})
+        print("2")
 
         # === 7️⃣ Sauvegardes locales ===
         model_path = os.path.join(MODEL_DIR, "xgb_fusion.json")
         encoder_path = os.path.join(MODEL_DIR, "label_encoder.joblib")
         metrics_path = os.path.join(MODEL_DIR, "metrics_fusion.json")
+        print("3")
 
         bst.save_model(model_path)
         joblib.dump(encoder, encoder_path)
         json.dump({"accuracy": float(acc), "f1": float(f1)}, open(metrics_path, "w"))
+        print("4")
 
         # === 8️⃣ Logging MLflow des artefacts ===
         mlflow.xgboost.log_model(bst, artifact_path="xgb_model")
         mlflow.log_artifact(encoder_path, artifact_path="preprocessing")
         mlflow.log_artifact(metrics_path, artifact_path="metrics")
+        print("5")
 
     print("💾 Model saved:", model_path)
     print("✅ Training done successfully.")
