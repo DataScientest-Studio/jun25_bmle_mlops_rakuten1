@@ -1,14 +1,12 @@
 services:
   mlflow-db:
-    image: postgres:13
+    image: postgres:latest
     environment:
       POSTGRES_USER: mlflow
       POSTGRES_PASSWORD: mlflowpass
       POSTGRES_DB: mlflow
     networks:
       - mlops-network
-    volumes:
-      - ./data/mlflow-postgres-data:/var/lib/postgresql/data
     restart: always
 
   minio:
@@ -49,7 +47,6 @@ services:
       - minio
 
 volumes:
-  mlflow-postgres-data:
   minio-data:
 
 networks:

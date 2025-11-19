@@ -49,6 +49,7 @@ api = [
     # Framework web
     "fastapi>=0.104.0,<1.0.0",
     "uvicorn[standard]>=0.24.0,<1.0.0",
+    "PyJWT>=2.8.0,<3.0.0",
     
     # Sécurité et authentification
     "python-jose[cryptography]>=3.3.0,<4.0.0",

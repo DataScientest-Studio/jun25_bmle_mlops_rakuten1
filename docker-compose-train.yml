@@ -1,17 +1,23 @@
-version: "3.9"
-
 services:
   trainer:
     build:
       context: .
-      dockerfile: docker/train/train.Dockerfile
+      dockerfile: docker/train/Dockerfile
     image: rakuten-trainer:latest
     container_name: rakuten_trainer
     volumes:
       - ./data:/app/data
       - ./mlruns:/app/mlruns
       - ./src:/app/src
+    networks:
+      - mlops-network
+    ports:
+      - "8000:8000"
     environment:
       - MLFLOW_TRACKING_URI=file:/app/mlruns
     working_dir: /app
-    command: ["python", "-m", "train.train"]
+
+networks:
+  mlops-network:
+    driver: bridge
+    name: mlops-network
