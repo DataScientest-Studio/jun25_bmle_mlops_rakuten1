@@ -81,12 +81,12 @@ from tqdm.auto import tqdm
 from src.data.clean_data import calcul_lignes_a_lire, clean_data
 from src.data.preprocess_data import preprocess_data
 
-import boto3
-from botocore.client import Config
+# import boto3
+# from botocore.client import Config
 
-os.environ["AWS_ACCESS_KEY_ID"] = "minioadmin"
-os.environ["AWS_SECRET_ACCESS_KEY"] = "minioadmin"
-os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://localhost:9000"
+# os.environ["AWS_ACCESS_KEY_ID"] = "minioadmin"
+# os.environ["AWS_SECRET_ACCESS_KEY"] = "minioadmin"
+# os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://localhost:9000"
 
 # === 0️⃣ Gestion des chemins ===
 # Récupère la racine du projet, peu importe d'où on exécute le script
@@ -107,10 +107,8 @@ print("📂 DATA_DIR :", DATA_DIR)
 print("📂 MODEL_DIR :", MODEL_DIR)
 print("📂 MLRUNS_DIR :", MLRUNS_DIR)
 
-print("Configuration MLFlow ...")
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment("rakuten_xgb_fusion")
-print("Configuration MinIO ...")
+
+"""print("Configuration MinIO ...")
 endpoint_url = os.environ[
     "MLFLOW_S3_ENDPOINT_URL"
 ]  # Adapte selon ton contexte (docker service ou localhost)
@@ -135,9 +133,13 @@ if bucket_name not in existing_buckets:
     print(f"Bucket '{bucket_name}' créé.")
 else:
     print(f"Bucket '{bucket_name}' existe déjà.")
+"""
 
 
 def train():
+    print("🛠️ Starting MLFlow configuration...")
+    mlflow.set_tracking_uri("http://localhost:5000")
+    mlflow.set_experiment("rakuten_xgb_fusion")
     print("🧹 Starting data cleaning process...")
     nb_lignes = calcul_lignes_a_lire(datetime.now().strftime("%Y-%m-%d"))
     clean_data(input_dir=RAW_DIR, images_dir=IMG_DIR, nbre_lignes=nb_lignes)
