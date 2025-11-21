@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: docker/mlflow/Dockerfile
     container_name: mlops-mlflow
+    environment:
+      - MLFLOW_HOST=mlflow    
     volumes:
       - ./data/mlflow:/app
     networks:
