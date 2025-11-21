@@ -63,6 +63,7 @@ services:
       - ./data:/app/data
       - ./mlruns:/app/mlruns
       - ./src:/app/src
+      - ./models:/app/models:ro
     networks:
       - mlops-network
     ports:
@@ -71,6 +72,13 @@ services:
       - MONGO_HOST=mongodb
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     working_dir: /app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
   predictor:
     build:
@@ -82,6 +90,7 @@ services:
       - ./data:/app/data
       - ./mlruns:/app/mlruns
       - ./src:/app/src
+      - ./models:/app/models:ro
     networks:
       - mlops-network
     ports:
@@ -90,6 +99,13 @@ services:
       - MONGO_HOST=mongodb
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     working_dir: /app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
 networks:
   mlops-network:
