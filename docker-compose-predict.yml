@@ -4,11 +4,22 @@ services:
   predictor:
     build:
       context: .
-      dockerfile: docker/predict/predict.Dockerfile
+      dockerfile: docker/predict/Dockerfile
     image: rakuten-predictor:latest
     container_name: rakuten_predictor
     volumes:
-      - ./data:/app/data        # accès aux modèles et npz
+      - ./data:/app/data
+      - ./mlruns:/app/mlruns
       - ./src:/app/src
+    networks:
+      - mlops-network
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=file:/app/mlruns
     working_dir: /app
-    command: ["python", "-m", "api.predict"]
+
+networks:
+  mlops-network:
+    driver: bridge
+    name: mlops-network

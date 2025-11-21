@@ -82,13 +82,6 @@ from tqdm.auto import tqdm
 from src.data.clean_data import calcul_lignes_a_lire, clean_data
 from src.data.preprocess_data import preprocess_data
 
-# import boto3
-# from botocore.client import Config
-
-# os.environ["AWS_ACCESS_KEY_ID"] = "minioadmin"
-# os.environ["AWS_SECRET_ACCESS_KEY"] = "minioadmin"
-# os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://localhost:9000"
-
 # === 0️⃣ Gestion des chemins ===
 # Récupère la racine du projet, peu importe d'où on exécute le script
 BASE_DIR = ""
@@ -109,37 +102,10 @@ print("📂 MODEL_DIR :", MODEL_DIR)
 print("📂 MLRUNS_DIR :", MLRUNS_DIR)
 
 
-"""print("Configuration MinIO ...")
-endpoint_url = os.environ[
-    "MLFLOW_S3_ENDPOINT_URL"
-]  # Adapte selon ton contexte (docker service ou localhost)
-access_key = os.environ["AWS_ACCESS_KEY_ID"]
-secret_key = os.environ["AWS_SECRET_ACCESS_KEY"]
-bucket_name = "mlflow-artifacts"
-
-# Mise en place du client S3 compatible MinIO
-s3 = boto3.client(
-    "s3",
-    endpoint_url=endpoint_url,
-    aws_access_key_id=access_key,
-    aws_secret_access_key=secret_key,
-    config=Config(signature_version="s3v4"),
-    region_name="us-east-1",
-)
-
-# Vérifie si le bucket existe
-existing_buckets = [bucket["Name"] for bucket in s3.list_buckets().get("Buckets", [])]
-if bucket_name not in existing_buckets:
-    s3.create_bucket(Bucket=bucket_name)
-    print(f"Bucket '{bucket_name}' créé.")
-else:
-    print(f"Bucket '{bucket_name}' existe déjà.")
-"""
-
-
 def train():
     print("🛠️ Starting MLFlow configuration...")
-    mlflow.set_tracking_uri("http://localhost:5000")
+    mlflow.set_tracking_uri("http://mlflow:5000")
+    print("🛠️ Set rakuten_xgb_fusion...")
     mlflow.set_experiment("rakuten_xgb_fusion")
     print("🧹 Starting data cleaning process...")
     nb_lignes = calcul_lignes_a_lire(datetime.now().strftime("%Y-%m-%d"))
