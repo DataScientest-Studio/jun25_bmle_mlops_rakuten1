@@ -104,7 +104,7 @@ print("📂 MLRUNS_DIR :", MLRUNS_DIR)
 
 def train():
     print("🛠️ Starting MLFlow configuration...")
-    mlflow.set_tracking_uri("http://localhost:5000")
+    mlflow.set_tracking_uri("http://mlflow:5000")
     print("🛠️ Set rakuten_xgb_fusion...")
     mlflow.set_experiment("rakuten_xgb_fusion")
     print("🧹 Starting data cleaning process...")
