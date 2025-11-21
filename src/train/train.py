@@ -67,6 +67,7 @@ avec volumes montés pour `data/` et `mlruns/`.
 import json
 import os
 from datetime import datetime
+import tempfile
 
 import joblib
 import mlflow
@@ -230,14 +231,28 @@ def train():
         encoder_path = os.path.join(MODEL_DIR, "label_encoder.joblib")
         metrics_path = os.path.join(MODEL_DIR, "metrics_fusion.json")
 
-        bst.save_model(model_path)
-        joblib.dump(encoder, encoder_path)
-        json.dump({"accuracy": float(acc), "f1": float(f1)}, open(metrics_path, "w"))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # modèles
+            model_tmp = os.path.join(tmpdir, "xgb_fusion.json")
+            encoder_tmp = os.path.join(tmpdir, "label_encoder.joblib")
+            metrics_tmp = os.path.join(tmpdir, "metrics_fusion.json")
+
+            bst.save_model(model_tmp)
+            joblib.dump(encoder, encoder_tmp)
+            json.dump({"accuracy": float(acc), "f1": float(f1)}, open(metrics_tmp, "w"))
+
+            # === 8️⃣ Logging MLflow des artefacts ===
+            mlflow.xgboost.log_model(bst, artifact_path="mlflow_artifacts")
+            mlflow.log_artifact(encoder_tmp, artifact_path="preprocessing")
+            mlflow.log_artifact(metrics_tmp, artifact_path="metrics")
+        #        bst.save_model(model_path)
+        #        joblib.dump(encoder, encoder_path)
+        #        json.dump({"accuracy": float(acc), "f1": float(f1)}, open(metrics_path, "w"))
 
         # === 8️⃣ Logging MLflow des artefacts ===
-        mlflow.xgboost.log_model(bst, artifact_path="xgb_model")
-        mlflow.log_artifact(encoder_path, artifact_path="preprocessing")
-        mlflow.log_artifact(metrics_path, artifact_path="metrics")
+        # mlflow.xgboost.log_model(bst, artifact_path="mlflow_artifacts")
+        # mlflow.log_artifact(encoder)
+    #        mlflow.log_artifact(metrics_path, artifact_path="metrics")
 
     print("💾 Model saved:", model_path)
     print("✅ Training done successfully.")
