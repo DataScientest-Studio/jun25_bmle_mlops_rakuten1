@@ -66,21 +66,21 @@ avec volumes montés pour `data/` et `mlruns/`.
 # --- train.py : Entraînement XGBoost fusion texte+image avec MLflow ---
 import json
 import os
-from datetime import datetime
 import tempfile
+from datetime import datetime
 
 import joblib
 import mlflow
 import mlflow.xgboost
 import numpy as np
 import xgboost as xgb
-from scipy import sparse
 from sklearn.metrics import accuracy_score, classification_report, f1_score
 from sklearn.preprocessing import LabelEncoder
 from tqdm.auto import tqdm
 
 from src.data.clean_data import calcul_lignes_a_lire, clean_data
 from src.data.preprocess_data import preprocess_data
+
 
 # === 0️⃣ Gestion des chemins ===
 # Récupère la racine du projet, peu importe d'où on exécute le script
@@ -89,22 +89,20 @@ RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
 IMG_DIR = os.path.join(RAW_DIR, "images", "images")
 DATA_DIR = os.path.join(BASE_DIR, "data", "processed")
 MODEL_DIR = os.path.join(BASE_DIR, "models")
-MLRUNS_DIR = os.path.join(BASE_DIR, "mlruns")
 
 os.makedirs(MODEL_DIR, exist_ok=True)
-# os.makedirs(MLRUNS_DIR, exist_ok=True)
 
 print("📂 BASE_DIR :", BASE_DIR)
 print("📂 RAW_DIR :", RAW_DIR)
 print("📂 IMG_DIR :", IMG_DIR)
 print("📂 DATA_DIR :", DATA_DIR)
 print("📂 MODEL_DIR :", MODEL_DIR)
-print("📂 MLRUNS_DIR :", MLRUNS_DIR)
 
 
 def train():
     print("🛠️ Starting MLFlow configuration...")
-    mlflow.set_tracking_uri("http://mlflow:5000")
+    mlflow_host = os.getenv("MLFLOW_HOST", "localhost")
+    mlflow.set_tracking_uri("http://" + mlflow_host + ":5000")
     print("🛠️ Set rakuten_xgb_fusion...")
     mlflow.set_experiment("rakuten_xgb_fusion")
     print("🧹 Starting data cleaning process...")
@@ -112,17 +110,11 @@ def train():
     clean_data(input_dir=RAW_DIR, images_dir=IMG_DIR, nbre_lignes=nb_lignes)
 
     print("⚙️ Starting data preprocessing...")
-    preprocess_data(
+    X_train, X_val, y_train, y_val, tfidf = preprocess_data(
         output_dir=DATA_DIR, input_model=os.path.join(MODEL_DIR, "resnet50-weights.pth")
     )
 
     print("🚀 Starting training process...")
-
-    # === 1️⃣ Chargement des données pré-fusionnées ===
-    X_train = sparse.load_npz(os.path.join(DATA_DIR, "X_train.npz"))
-    X_val = sparse.load_npz(os.path.join(DATA_DIR, "X_val.npz"))
-    y_train = np.load(os.path.join(DATA_DIR, "y_train.npy"))
-    y_val = np.load(os.path.join(DATA_DIR, "y_val.npy"))
 
     print(f"📦 X_train: {X_train.shape}, X_val: {X_val.shape}")
     print(f"📊 y_train: {y_train.shape}, y_val: {y_val.shape}")
@@ -200,9 +192,12 @@ def train():
         with tempfile.TemporaryDirectory() as tmpdir:
             # modèles
             encoder_tmp = os.path.join(tmpdir, "label_encoder.joblib")
+            tfidf_tmp = os.path.join(tmpdir, "tfidf_vectorizer.joblib")
+            joblib.dump(tfidf, tfidf_tmp)
             joblib.dump(encoder, encoder_tmp)
 
-            mlflow.log_artifact(encoder_tmp, artifact_path="Label Encoder")
+            mlflow.log_artifact(tfidf_tmp, artifact_path="TFIDF")
+            mlflow.log_artifact(encoder_tmp, artifact_path="Encoder")
 
     print("✅ Training done successfully.")
     return {"status": "done", "accuracy": acc, "f1": f1}

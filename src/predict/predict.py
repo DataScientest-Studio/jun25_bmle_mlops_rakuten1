@@ -5,11 +5,12 @@ import io
 import json
 import os
 from typing import Dict, Optional, Tuple
-
+import tempfile
 import joblib
 import numpy as np
 import pandas as pd
 import torch
+import mlflow
 import xgboost as xgb
 from PIL import Image
 from scipy.sparse import csr_matrix, hstack
@@ -54,26 +55,55 @@ cat_map = {
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
 IMG_DIR = os.path.join(RAW_DIR, "images", "images")
-DATA_DIR = os.path.join(BASE_DIR, "data", "processed")
-MODEL_DIR = os.path.join(BASE_DIR, "models")
-MLRUNS_DIR = os.path.join(BASE_DIR, "mlruns")
-
-os.makedirs(MODEL_DIR, exist_ok=True)
-os.makedirs(MLRUNS_DIR, exist_ok=True)
 
 print("📂 BASE_DIR :", BASE_DIR)
 print("📂 RAW_DIR :", RAW_DIR)
 print("📂 IMG_DIR :", IMG_DIR)
-print("📂 DATA_DIR :", DATA_DIR)
-print("📂 MODEL_DIR :", MODEL_DIR)
-print("📂 MLRUNS_DIR :", MLRUNS_DIR)
 
 
 def predict(designation: str, description: str, image: Image) -> dict:
     print("📦 Chargement des artefacts...")
-    bst = xgb.Booster()
-    bst.load_model(os.path.join(MODEL_DIR, "xgb_fusion.json"))
-    encoder = joblib.load(os.path.join(MODEL_DIR, "label_encoder.joblib"))
+    print("🛠️ Starting MLFlow configuration...")
+
+    mlflow_host = os.getenv("MLFLOW_HOST", "localhost")
+    mlflow.set_tracking_uri("http://" + mlflow_host + ":5000")
+
+    client = mlflow.tracking.MlflowClient()
+
+    experiment_name = "rakuten_xgb_fusion"
+    experiment = client.get_experiment_by_name(experiment_name)
+    if experiment is None:
+        raise ValueError(f"L'expérience '{experiment_name}' n'existe pas.")
+
+    runs = client.search_runs(
+        experiment_ids=[experiment.experiment_id], order_by=["metrics.accuracy DESC"], max_results=1
+    )
+
+    if len(runs) == 0:
+        raise ValueError("Aucun run trouvé dans MLflow pour cette expérience.")
+
+    best_run = runs[0]
+    best_run_id = best_run.info.run_id
+    best_acc = best_run.data.metrics["accuracy"]
+
+    print("📌 Best run ID :", best_run_id)
+    print("📈 Best accuracy :", best_acc)
+
+    model_uri = f"runs:/{best_run_id}/xgb_model"
+    print("📥Chargement de XGBoost...")
+    bst = mlflow.xgboost.load_model(model_uri)
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # modèles
+        print("📥Chargement du label encoder...")
+        encoder_path = mlflow.artifacts.download_artifacts(
+            f"runs:/{best_run_id}/Encoder/label_encoder.joblib", dst_path=tmpdir
+        )
+        encoder = joblib.load(encoder_path)
+        print("📥Chargement du TFIDF...")
+        tfidf_path = mlflow.artifacts.download_artifacts(
+            f"runs:/{best_run_id}/TFIDF/tfidf_vectorizer.joblib", dst_path=tmpdir
+        )
+        tfidf = joblib.load(tfidf_path)
 
     print("🧹 Data cleaning...")
     data_cleaned = clean_one_row(designation, description, image)
@@ -81,7 +111,7 @@ def predict(designation: str, description: str, image: Image) -> dict:
     df_clean = pd.DataFrame([data_cleaned])
     df_clean["text"] = df_clean["designation"].fillna("") + " " + df_clean["description"].fillna("")
 
-    preprocessor = Preprocessor()
+    preprocessor = Preprocessor(tfidf=tfidf)
     X_tfidf, X_img = preprocessor.preprocess_data(df_clean)
     X = hstack([X_tfidf, X_img])
 
