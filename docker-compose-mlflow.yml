@@ -5,8 +5,7 @@ services:
       dockerfile: docker/mlflow/Dockerfile
     container_name: mlops-mlflow
     volumes:
-      - ./data/mlflow_artifacts:/mlflow_artifacts
-      - ./data/mlflow.db:/mlflow.db
+      - ./data/mlflow:/app
     networks:
       - mlops-network
     ports:
