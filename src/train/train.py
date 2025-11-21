@@ -192,7 +192,7 @@ def train():
         print(classification_report(y_val_enc, y_pred, digits=3)[:800])
 
         mlflow.log_metrics({"accuracy": float(acc), "f1": float(f1)})
-        mlflow.xgboost.log_model(bst, artifact_path="model")
+        mlflow.xgboost.log_model(bst, artifact_path="xgb_model")
 
         # Creation d'un repertoire temporaire pour créer des artefactes
         # avant de pouvoir les sauvegarder dans MLFlow
