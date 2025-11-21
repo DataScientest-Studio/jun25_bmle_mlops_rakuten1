@@ -1,25 +1,21 @@
 services:
-  # ==========================================================================
-  # API - FastAPI avec authentification
-  # ==========================================================================
-  api:
+  trainer:
     build:
       context: .
-      dockerfile: docker/api/Dockerfile
-    container_name: mlops-api
-    restart: unless-stopped
+      dockerfile: docker/train/Dockerfile
+    image: rakuten-trainer:latest
+    container_name: rakuten_trainer
+    volumes:
+      - ./data:/app/data
+      - ./mlruns:/app/mlruns
+      - ./src:/app/src
     networks:
       - mlops-network
     ports:
       - "8000:8000"
-    volumes:
-      - ./src:/app/src:ro
-      - ./models:/app/models:ro
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    environment:
+      - MLFLOW_TRACKING_URI=file:/app/mlruns
+    working_dir: /app
 
 networks:
   mlops-network:
