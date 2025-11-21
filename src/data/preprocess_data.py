@@ -35,8 +35,15 @@ class Preprocessor:
             ]
         )
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.resnet = models.resnet50(weights=None)
-        self.resnet.load_state_dict(torch.load(input_model))
+
+        if not os.path.exists(input_model):
+            self.resnet = models.resnet50(weights=models.ResNet50_Weights.IMAGENET1K_V1)
+            output_file = os.path.join("models", "resnet50-weights.pth")
+            torch.save(self.resnet.state_dict(), output_file)
+        else:
+            self.resnet = models.resnet50(weights=None)
+            self.resnet.load_state_dict(torch.load(input_model))
+
         self.resnet.fc = nn.Identity()
         self.batch_size = batch_size
 
