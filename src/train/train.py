@@ -102,6 +102,7 @@ print("📂 MODEL_DIR :", MODEL_DIR)
 def train():
     print("🛠️ Starting MLFlow configuration...")
     mlflow_host = os.getenv("MLFLOW_HOST", "localhost")
+    print("Affichage du host", mlflow_host)
     mlflow.set_tracking_uri("http://" + mlflow_host + ":5000")
     print("🛠️ Set rakuten_xgb_fusion...")
     mlflow.set_experiment("rakuten_xgb_fusion")

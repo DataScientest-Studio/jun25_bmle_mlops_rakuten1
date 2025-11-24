@@ -43,7 +43,7 @@ services:
     build:
       context: .
       dockerfile: docker/mlflow/Dockerfile
-    container_name: mlops-mlflow
+    container_name: mlops-mlflow   
     volumes:
       - ./data/mlflow:/app
     networks:
@@ -68,6 +68,7 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - MLFLOW_HOST=mlflow
       - MONGO_HOST=mongodb
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     working_dir: /app
@@ -95,6 +96,7 @@ services:
     ports:
       - "8080:8080"
     environment:
+      - MLFLOW_HOST=mlflow
       - MONGO_HOST=mongodb
       - MLFLOW_TRACKING_URI=http://mlflow:5000
     working_dir: /app

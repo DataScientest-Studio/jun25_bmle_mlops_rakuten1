@@ -42,4 +42,4 @@ RUN mkdir -p /app/data/raw /app/data/preprocessed /app/data/processed /app/model
 
 # Point d'entrée par défaut
 ENV PYTHONPATH=/app/src
-CMD ["uvicorn", "api.predict_api:prediction", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "api.predict_api:prediction", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]
