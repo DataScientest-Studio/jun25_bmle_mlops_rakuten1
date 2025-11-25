@@ -95,3 +95,8 @@ models/
 
 # Mlruns
 mlruns/
+
+# Perso Pascal
+tests/test2.yml
+tests/test.yml
+tests/test3.yml
