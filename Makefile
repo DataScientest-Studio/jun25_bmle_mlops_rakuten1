@@ -27,3 +27,10 @@ mongodb:
 
 mongodb_stop:
 	docker compose down mongodb
+
+airflow:
+	docker compose -f docker-compose-airflow.yml up -d
+
+airflow_stop:
+	docker compose -f docker-compose-airflow.yml down
+	
