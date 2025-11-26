@@ -33,4 +33,9 @@ airflow:
 
 airflow_stop:
 	docker compose -f docker-compose-airflow.yml down
+
+promgraf:
+	docker compose -f docker-compose-prom-graf.yml up -d
 	
+promgraf_stop:
+	docker compose -f docker-compose-prom-graf.yml down

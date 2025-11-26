@@ -14,6 +14,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
 
   redis:
     image: redis:7-alpine
@@ -26,6 +27,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: always
 
   airflow-webserver:
     build:
@@ -58,6 +60,7 @@ services:
     ports:
       - "6080:8080"
     command: webserver
+    restart: always
 
   airflow-scheduler:
     build:
@@ -88,6 +91,7 @@ services:
       - ./data/airflow/logs:/opt/airflow/logs
       - ./data/airflow/plugins:/opt/airflow/plugins
     command: scheduler
+    restart: always
 
   airflow-worker:
     build:
@@ -118,6 +122,7 @@ services:
       - ./data/airflow/logs:/opt/airflow/logs
       - ./data/airflow/plugins:/opt/airflow/plugins
     command: celery worker
+    restart: always
 
   airflow-init:
     build:
