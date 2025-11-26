@@ -10,4 +10,4 @@ scrape_configs:
       - targets: ['node-exporter:9100']
   - job_name: 'node_exporter_windows'
     static_configs:
-      - targets: ['localhost:9182']
+      - targets: ['host.docker.internal:9182']

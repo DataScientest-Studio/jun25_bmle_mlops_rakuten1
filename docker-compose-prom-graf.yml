@@ -19,6 +19,10 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+    volumes:
+      - ./src/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./src/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      - ./src/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     networks:
       - mlops-network
     restart: always
