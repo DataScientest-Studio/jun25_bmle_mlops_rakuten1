@@ -100,3 +100,4 @@ mlruns/
 tests/test2.yml
 tests/test.yml
 tests/test3.yml
+tests/test.py
