@@ -54,7 +54,7 @@ services:
       _PIP_ADDITIONAL_REQUIREMENTS: ''
       AIRFLOWSCHEDULERDAG_DIR_LIST_INTERVAL: '30'
     volumes:
-      - ./data/airflow/dags:/opt/airflow/dags
+      - ./src/airflow/dags:/opt/airflow/dags
       - ./data/airflow/logs:/opt/airflow/logs
       - ./data/airflow/plugins:/opt/airflow/plugins
     ports:
@@ -87,7 +87,7 @@ services:
       _PIP_ADDITIONAL_REQUIREMENTS: ''
       AIRFLOWSCHEDULERDAG_DIR_LIST_INTERVAL: '30'
     volumes:
-      - ./data/airflow/dags:/opt/airflow/dags
+      - ./src/airflow/dags:/opt/airflow/dags
       - ./data/airflow/logs:/opt/airflow/logs
       - ./data/airflow/plugins:/opt/airflow/plugins
     command: scheduler
@@ -118,7 +118,7 @@ services:
       _PIP_ADDITIONAL_REQUIREMENTS: ''
       AIRFLOWSCHEDULERDAG_DIR_LIST_INTERVAL: '30'
     volumes:
-      - ./data/airflow/dags:/opt/airflow/dags
+      - ./src/airflow/dags:/opt/airflow/dags
       - ./data/airflow/logs:/opt/airflow/logs
       - ./data/airflow/plugins:/opt/airflow/plugins
     command: celery worker
