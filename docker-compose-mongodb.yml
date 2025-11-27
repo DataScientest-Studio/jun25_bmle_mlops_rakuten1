@@ -39,10 +39,6 @@ services:
     networks:
       - mlops-network
 
-networks:
-  mlops-network:
-    driver: bridge
-
 # Déclare les secrets Docker qui seront montés dans le conteneur
 secrets:
   mongo_admin_user:

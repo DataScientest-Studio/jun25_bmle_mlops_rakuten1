@@ -50,7 +50,3 @@ services:
       - mlops-network
     restart: always
    
-networks:
-  mlops-network:
-    driver: bridge
-    name: mlops-network

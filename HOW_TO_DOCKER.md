@@ -107,6 +107,26 @@ docker image prune -f
 # Nettoyer TOUT (containers arrêtés, images, volumes, cache)
 docker system prune -a --volumes
 ```
+# Nettoyer TOUT
+bash
+docker stop $(docker ps -q)
+docker rm $(docker ps -a -q)
+docker system prune
+docker system prune -a --volumes
+Sous PowerShell (Windows)
+
+    Arrêter tous les conteneurs en cours d’exécution :
+
+powershell
+docker ps -q | % { docker stop $ }
+docker ps -a -q | % { docker rm $ }
+docker system prune -a --volumes
+
+Pour cmd plutot
+for /f %i in ('docker ps -q') do docker stop %i
+for /f %i in ('docker ps -a -q') do docker rm %i
+docker system prune -a --volumes
+for /f %i in ('docker volume ls -q') do docker volume rm %i
 
 ### Synthèse et explications détaillées des commandes principales
 ```
