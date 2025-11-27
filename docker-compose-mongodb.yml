@@ -26,6 +26,7 @@ services:
     volumes:
       - ./logs:/var/log/mongodb
       - ./conf:/conf:ro
+      - ./data/mongodb/db:/data/db
 
     # Définit le chemin du fichier de configuration mongod (copié par le Dockerfile)
     command: ["mongod", "--config", "/etc/mongod.conf"]
