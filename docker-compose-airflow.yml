@@ -150,11 +150,3 @@ services:
       _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
       _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
     command: version
-
-volumes:
-  postgres-db-volume:
-
-networks:
-  mlops-network:
-    driver: bridge
-    name: mlops-network

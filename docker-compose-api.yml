@@ -3,21 +3,52 @@ services:
     build:
       context: .
       dockerfile: docker/train/Dockerfile
-    image: rakuten-trainer:latest
     container_name: rakuten_trainer
     volumes:
       - ./data:/app/data
       - ./mlruns:/app/mlruns
       - ./src:/app/src
+      - ./models:/app/models:ro
     networks:
       - mlops-network
     ports:
       - "8000:8000"
     environment:
-      - MLFLOW_TRACKING_URI=file:/app/mlruns
+      - MLFLOW_HOST=mlflow
+      - MONGO_HOST=mongodb
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
     working_dir: /app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 
-networks:
-  mlops-network:
-    driver: bridge
-    name: mlops-network
+  predictor:
+    build:
+      context: .
+      dockerfile: docker/predict/Dockerfile
+    container_name: rakuten_predictor
+    volumes:
+      - ./data:/app/data
+      - ./mlruns:/app/mlruns
+      - ./src:/app/src
+      - ./models:/app/models:ro
+    networks:
+      - mlops-network
+    ports:
+      - "8080:8080"
+    environment:
+      - MLFLOW_HOST=mlflow
+      - MONGO_HOST=mongodb
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+    working_dir: /app
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
