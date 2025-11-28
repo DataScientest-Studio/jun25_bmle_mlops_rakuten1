@@ -25,8 +25,8 @@ services:
     # - ./conf : répertoire local contenant la configuration MongoDB (lecture seule)
     volumes:
       - ./logs:/var/log/mongodb
-      - ./conf:/conf:ro
-      - ./data/mongodb/db:/data/db
+      - ./conf:/conf
+      - mongo-db-volume:/data/db
 
     # Définit le chemin du fichier de configuration mongod (copié par le Dockerfile)
     command: ["mongod", "--config", "/etc/mongod.conf"]

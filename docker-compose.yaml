@@ -7,6 +7,7 @@ include:
 
 volumes:
   postgres-db-volume:
+  mongo-db-volume:
 
 networks:
   mlops-network:
