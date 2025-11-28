@@ -81,6 +81,9 @@ from tqdm.auto import tqdm
 from src.data.clean_data import calcul_lignes_a_lire, clean_data
 from src.data.preprocess_data import preprocess_data
 
+import boto3
+from botocore.exceptions import ClientError
+
 
 # === 0️⃣ Gestion des chemins ===
 # Récupère la racine du projet, peu importe d'où on exécute le script
@@ -100,6 +103,8 @@ print("📂 MODEL_DIR :", MODEL_DIR)
 
 
 def train():
+    print("🛢️ Starting MinIO configuration...")
+    create_bucket_if_not_exists("mlflow-artifacts", "http://minio:9000", "minioadmin", "minioadmin")
     print("🛠️ Starting MLFlow configuration...")
     mlflow_host = os.getenv("MLFLOW_HOST", "localhost")
     print("Affichage du host", mlflow_host)
@@ -224,6 +229,33 @@ def gpu_available():
     except xgb.core.XGBoostError:
         print("🐌 GPU non disponible - utilisation du CPU")
         return False
+
+
+def create_bucket_if_not_exists(
+    bucket_name: str, endpoint_url: str, access_key: str, secret_key: str
+):
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=endpoint_url,
+        aws_access_key_id=access_key,
+        aws_secret_access_key=secret_key,
+        region_name="us-east-1",  # région par défaut MinIO
+    )
+
+    try:
+        # Vérifie si le bucket existe (raise une erreur sinon)
+        s3.head_bucket(Bucket=bucket_name)
+        print(f"Bucket '{bucket_name}' existe déjà.")
+    except ClientError as e:
+        error_code = int(e.response["Error"]["Code"])
+        if error_code == 404:
+            # Le bucket n'existe pas, on le crée
+            s3.create_bucket(Bucket=bucket_name)
+            print(f"Bucket '{bucket_name}' créé.")
+        else:
+            # Une autre erreur
+            print(f"Erreur lors de la vérification du bucket {bucket_name}: {e}")
+            raise
 
 
 # --- Point d'entrée pour Docker ou CLI ---

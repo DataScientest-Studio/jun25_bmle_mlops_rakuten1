@@ -6,10 +6,29 @@ services:
     container_name: mlops-mlflow
     environment:
       - MLFLOW_HOST=mlflow    
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
     volumes:
       - ./data/mlflow:/app
     networks:
       - mlops-network
+    depends_on:
+      - minio
     ports:
       - "5000:5000"
     restart: always
+  minio:
+    image: minio/minio:latest
+    container_name: mlops-minio
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data
+    volumes:
+      - ./data/minio:/data
+    networks:
+      - mlops-network
+    ports:
+      - "9000:9000"   # API S3
+      - "9001:9001"   # Console MinIO
