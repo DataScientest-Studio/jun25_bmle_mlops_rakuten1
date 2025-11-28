@@ -1,6 +1,6 @@
 FROM ghcr.io/mlflow/mlflow:latest
 
-RUN pip install psycopg2-binary xgboost
+RUN pip install psycopg2-binary xgboost botocore boto3
 
 WORKDIR /app
 
@@ -10,4 +10,5 @@ CMD ["mlflow", "server", \
      "--host", "0.0.0.0",\
      "--port", "5000", \
      "--allowed-hosts", "*", \
-     "--backend-store-uri", "sqlite:///mlflow.db"]
+     "--backend-store-uri", "sqlite:///mlflow.db", \
+     "--default-artifact-root", "s3://mlflow-artifacts/"]

@@ -128,7 +128,7 @@ def calcul_lignes_a_lire(date_lancement: str) -> int:
 
     lignes_min = 1000
     lignes_max = 85000
-    date_debut = datetime(2025, 11, 20)
+    date_debut = datetime(2025, 11, 28)
     date_fin = datetime(2025, 12, 13)
     date_actuelle = datetime.strptime(date_lancement, "%Y-%m-%d")
     jours_total = (date_fin - date_debut).days

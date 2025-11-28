@@ -77,8 +77,8 @@ target/
 
 # exclude data from source control by default
 data/*
-!data/mlflow/
-!data/mlflow/**
+#!data/mlflow/
+#!data/mlflow/**
 
 # Mac OS-specific storage files
 .DS_Store
@@ -98,3 +98,4 @@ tests/test2.yml
 tests/test.yml
 tests/test3.yml
 tests/test.py
+
