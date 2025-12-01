@@ -8,6 +8,10 @@ include:
 volumes:
   postgres-db-volume:
   mongo-db-volume:
+  minio-volume:
+  mlflow-volume:
+  airflow-logs-volume:
+  airflow-plugins-volume:
 
 networks:
   mlops-network:
