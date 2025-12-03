@@ -32,3 +32,4 @@ services:
     ports:
       - "9000:9000"   # API S3
       - "9001:9001"   # Console MinIO
+    restart: always
