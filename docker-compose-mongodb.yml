@@ -7,9 +7,7 @@ services:
 
     # Nom du conteneur pour le service MongoDB
     container_name: mongodb7
-
-    # Redémarre le conteneur sauf si on l'arrête explicitement
-    restart: unless-stopped
+    restart: always
 
     # Définit les utilisateurs Mongo "root" par des secrets (sécurisé)
     environment:
