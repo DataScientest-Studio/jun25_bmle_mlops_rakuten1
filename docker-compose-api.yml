@@ -6,7 +6,6 @@ services:
     container_name: rakuten_trainer
     volumes:
       - ./data:/app/data
-      - ./mlruns:/app/mlruns
       - ./src:/app/src
       - ./models:/app/models
     networks:
@@ -36,7 +35,6 @@ services:
     container_name: rakuten_predictor
     volumes:
       - ./data:/app/data
-      - ./mlruns:/app/mlruns
       - ./src:/app/src
       - ./models:/app/models
     networks:
