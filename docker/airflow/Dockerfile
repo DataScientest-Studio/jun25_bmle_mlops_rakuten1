@@ -11,6 +11,8 @@ FROM apache/airflow:2.11.0
 # Revenir à l’utilisateur airflow (obligatoire pour Airflow)
 USER airflow
 
+COPY src/ /app/src/
+
 # Installer des dépendances Python supplémentaires
 # (tu peux aussi utiliser requirements.txt si tu préfères)
-RUN pip install --no-cache-dir pymongo
+RUN pip install --no-cache-dir pymongo evidently==0.6.7 pandas pillow beautifulsoup4 lxml

@@ -57,6 +57,8 @@ services:
       - ./src/airflow/dags:/opt/airflow/dags
       - airflow-logs-volume:/opt/airflow/logs
       - airflow-plugins-volume:/opt/airflow/plugins
+      - ./data:/app/data
+      - ./reports:/app/reports
     ports:
       - "6080:8080"
     command: webserver
@@ -90,6 +92,8 @@ services:
       - ./src/airflow/dags:/opt/airflow/dags
       - airflow-logs-volume:/opt/airflow/logs
       - airflow-plugins-volume:/opt/airflow/plugins
+      - ./data:/app/data
+      - ./reports:/app/reports
     command: scheduler
     restart: always
 
@@ -121,6 +125,8 @@ services:
       - ./src/airflow/dags:/opt/airflow/dags
       - airflow-logs-volume:/opt/airflow/logs
       - airflow-plugins-volume:/opt/airflow/plugins
+      - ./data:/app/data
+      - ./reports:/app/reports
     command: celery worker
     restart: always
 
