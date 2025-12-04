@@ -79,6 +79,8 @@ target/
 data/
 #!data/mlflow/
 #!data/mlflow/**
+# exclude logs from source control by default
+logs/
 
 # Mac OS-specific storage files
 .DS_Store
