@@ -1,0 +1,160 @@
+name: CD - Build & Deploy (Multi-Arch)
+
+# ------------------------------------------------------------------------------
+# DÉCLENCHEURS (TRIGGERS)
+# ------------------------------------------------------------------------------
+# Ce workflow se lance automatiquement quand la CI ("Python application") réussit.
+# On peut aussi le lancer à la main via le bouton "Run workflow" sur GitHub.
+on:
+  workflow_run:
+    workflows: ["CI - Continuous Integration (lint, format and test python sources)"]
+    types:
+      - completed
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+
+  # ==============================================================================
+  # JOB 1 : CONSTRUCTION & ENVOI DES IMAGES (BUILD & PUSH)
+  # ==============================================================================
+  build-and-push:
+    # Sécurité : on ne lance le déploiement que si les tests CI sont verts
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    
+    # Permissions nécessaires pour écrire les images dans le registre GitHub
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Liste de tous les services à construire
+        include:
+          - service: trainer
+            file: docker/train/Dockerfile
+            image_suffix: rakuten-trainer
+          - service: predictor
+            file: docker/predict/Dockerfile
+            image_suffix: rakuten-predictor
+          - service: airflow
+            file: docker/airflow/Dockerfile
+            image_suffix: rakuten-airflow
+          - service: mlflow
+            file: docker/mlflow/Dockerfile
+            image_suffix: rakuten-mlflow
+          - service: prometheus
+            file: docker/prometheus/Dockerfile
+            image_suffix: rakuten-prometheus
+
+    steps:
+      - name: 1. Récupération du code source
+        uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------------
+      # GESTION MULTI-ARCHITECTURE (Oracle ARM + PC Classique)
+      # ------------------------------------------------------------------------
+      # QEMU est un émulateur. Il permet au runner GitHub (qui est Intel/AMD)
+      # de compiler du code pour les puces ARM (comme celles d'Oracle Cloud).
+      - name: 2. Configuration de QEMU (Émulation ARM)
+        uses: docker/setup-qemu-action@v3
+
+      # Docker Buildx est l'outil qui permet de créer des images multi-arch.
+      - name: 3. Configuration de Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 4. Connexion au registre d'images (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 5. Préparation des tags (versioning)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.image_suffix }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=long
+
+      # C'est l'étape clé. Notez la ligne "platforms".
+      - name: 6. Construction et Envoi (Build & Push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.file }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # ICI : On construit pour les PC classiques (amd64) ET pour Oracle (arm64)
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ==============================================================================
+  # JOB 2 : DÉPLOIEMENT SUR LE SERVEUR (DEPLOY SSH)
+  # ==============================================================================
+  deploy-ssh:
+    # Ce job attend obligatoirement que le Build soit fini et réussi
+    needs: build-and-push
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # On copie les fichiers YAML (docker-compose) sur le serveur.
+      # Sans ça, le serveur ne connaîtrait pas les nouveaux volumes ou configs.
+      - name: 1. Transfert des configurations (SCP)
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST_ORACLE }}
+          username: ${{ secrets.USER_ORACLE }}
+          key: ${{ secrets.SSH_KEY_ORACLE }}
+          source: "docker-compose*.yml"     # Copie tous les fichiers compose
+          target: "/home/${{ secrets.USER_ORACLE }}/app"
+
+      # On se connecte en SSH pour piloter Docker à distance.
+      - name: 2. Connexion SSH et Mise à jour
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST_ORACLE }}
+          username: ${{ secrets.USER_ORACLE }}
+          key: ${{ secrets.SSH_KEY_ORACLE }}
+          script: |
+            cd /home/${{ secrets.USER_ORACLE }}/app
+            
+            # A. Authentification Docker sur le serveur
+            # Permet au serveur de télécharger vos images privées depuis GitHub
+            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
+            # B. Définition des variables d'environnement
+            # Ces variables disent à docker-compose : "N'utilise pas le build local,
+            # prends l'image qui est sur le registre en ligne".
+            # Docker va automatiquement choisir la version ARM64 grâce au build précédent.
+            export REGISTRY=ghcr.io/${{ github.repository }}
+            export TRAINER_IMAGE=$REGISTRY/rakuten-trainer:latest
+            export PREDICTOR_IMAGE=$REGISTRY/rakuten-predictor:latest
+            export AIRFLOW_IMAGE=$REGISTRY/rakuten-airflow:latest
+            export MLFLOW_IMAGE=$REGISTRY/rakuten-mlflow:latest
+            export PROMETHEUS_IMAGE=$REGISTRY/rakuten-prometheus:latest
+
+            # C. Téléchargement des nouvelles images (Pull)
+            docker compose pull
+            
+            # D. Redémarrage des services (Up)
+            # -d : détachement (en arrière-plan)
+            # --remove-orphans : nettoie les vieux conteneurs qui ne servent plus
+            docker compose up -d --remove-orphans
+            
+            # E. Nettoyage final
+            # Supprime les vieilles images inutilisées pour libérer de la place
+            docker image prune -f
