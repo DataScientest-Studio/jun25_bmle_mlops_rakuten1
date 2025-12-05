@@ -1,8 +1,5 @@
 name: CD - Build & Deploy (Sequential)
 
-# ------------------------------------------------------------------------------
-# DÉCLENCHEURS
-# ------------------------------------------------------------------------------
 on:
   workflow_run:
     workflows: ["CI - Continuous Integration (lint, format and test python sources)"]
@@ -12,12 +9,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  # On ne peut pas transformer en minuscule ici directement
 
 jobs:
-  # ==============================================================================
-  # JOB 1 : BUILD SÉQUENTIEL (Build -> Push -> Clean -> Repeat)
-  # ==============================================================================
   build-sequential:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
@@ -26,6 +20,11 @@ jobs:
       packages: write
 
     steps:
+      # 0. NOM REPO EN MINUSCULES
+      - name: 🔡 Mettre le nom du repo en minuscules
+        run: |
+          echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
+          
       # 1. OPTIMISATION INITIALE : On fait le vide dès le départ
       - name: 🧹 Libérer de l'espace disque (Free Disk Space)
         uses: jlumbroso/free-disk-space@main
