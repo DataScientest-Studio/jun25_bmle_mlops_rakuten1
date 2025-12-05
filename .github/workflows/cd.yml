@@ -1,10 +1,8 @@
-name: CD - Build & Deploy (Multi-Arch)
+name: CD - Build & Deploy (Sequential)
 
 # ------------------------------------------------------------------------------
-# DÉCLENCHEURS (TRIGGERS)
+# DÉCLENCHEURS
 # ------------------------------------------------------------------------------
-# Ce workflow se lance automatiquement quand la CI ("Python application") réussit.
-# On peut aussi le lancer à la main via le bouton "Run workflow" sur GitHub.
 on:
   workflow_run:
     workflows: ["CI - Continuous Integration (lint, format and test python sources)"]
@@ -17,113 +15,197 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-
   # ==============================================================================
-  # JOB 1 : CONSTRUCTION & ENVOI DES IMAGES (BUILD & PUSH)
+  # JOB 1 : BUILD SÉQUENTIEL (Build -> Push -> Clean -> Repeat)
   # ==============================================================================
-  build-and-push:
-    # Sécurité : on ne lance le déploiement que si les tests CI sont verts
+  build-sequential:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    
-    # Permissions nécessaires pour écrire les images dans le registre GitHub
     permissions:
       contents: read
       packages: write
 
-    strategy:
-      fail-fast: false
-      matrix:
-        # Liste de tous les services à construire
-        include:
-          - service: trainer
-            file: docker/train/Dockerfile
-            image_suffix: rakuten-trainer
-          - service: predictor
-            file: docker/predict/Dockerfile
-            image_suffix: rakuten-predictor
-          - service: airflow
-            file: docker/airflow/Dockerfile
-            image_suffix: rakuten-airflow
-          - service: mlflow
-            file: docker/mlflow/Dockerfile
-            image_suffix: rakuten-mlflow
-          - service: prometheus
-            file: docker/prometheus/Dockerfile
-            image_suffix: rakuten-prometheus
-
     steps:
-      - name: 1. Récupération du code source
+      # 1. OPTIMISATION INITIALE : On fait le vide dès le départ
+      - name: 🧹 Libérer de l'espace disque (Free Disk Space)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: true
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: false
+          swap-storage: false
+
+      - name: Récupération du code source
         uses: actions/checkout@v4
 
-      # ------------------------------------------------------------------------
-      # GESTION MULTI-ARCHITECTURE (Oracle ARM + PC Classique)
-      # ------------------------------------------------------------------------
-      # QEMU est un émulateur. Il permet au runner GitHub (qui est Intel/AMD)
-      # de compiler du code pour les puces ARM (comme celles d'Oracle Cloud).
-      - name: 2. Configuration de QEMU (Émulation ARM)
+      - name: Configuration de QEMU (Multi-Arch)
         uses: docker/setup-qemu-action@v3
 
-      # Docker Buildx est l'outil qui permet de créer des images multi-arch.
-      - name: 3. Configuration de Docker Buildx
+      - name: Configuration de Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: 4. Connexion au registre d'images (GHCR)
+      - name: Connexion au registre (GHCR)
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 5. Préparation des tags (versioning)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.image_suffix }}
-          tags: |
-            type=raw,value=latest
-            type=sha,format=long
+      # ------------------------------------------------------------------------
+      # SERVICE 1 : TRAINER (Probablement le plus gros)
+      # ------------------------------------------------------------------------
+      # - name: 🏗️ Build & Push - TRAINER
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: docker/train/Dockerfile
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-trainer:latest
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      # C'est l'étape clé. Notez la ligne "platforms".
-      - name: 6. Construction et Envoi (Build & Push)
+      # - name: 🧹 Nettoyage post-Trainer
+      #   run: |
+      #     docker system prune -a -f --volumes
+      #     docker builder prune -f
+
+      # ------------------------------------------------------------------------
+      # SERVICE 2 : PREDICTOR
+      # ------------------------------------------------------------------------
+      # - name: 🏗️ Build & Push - PREDICTOR
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: docker/predict/Dockerfile
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-predictor:latest
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+
+      # - name: 🧹 Nettoyage post-Predictor
+      #   run: |
+      #     docker system prune -a -f --volumes
+      #     docker builder prune -f
+
+      # ------------------------------------------------------------------------
+      # SERVICE 3 : API (FASTAPI)
+      # ------------------------------------------------------------------------
+      - name: 🏗️ Build & Push - API
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ${{ matrix.file }}
+          file: docker/api/Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          # ICI : On construit pour les PC classiques (amd64) ET pour Oracle (arm64)
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-api:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🧹 Nettoyage post-API
+        run: docker builder prune -f
+
+      # ------------------------------------------------------------------------
+      # SERVICE 4 : STREAMLIT (FRONTEND)
+      # ------------------------------------------------------------------------
+      # - name: 🏗️ Build & Push - STREAMLIT
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: docker/streamlit/Dockerfile
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-streamlit:latest
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+
+      # - name: 🧹 Nettoyage post-Streamlit
+      #   run: docker builder prune -f
+
+      # ------------------------------------------------------------------------
+      # SERVICE 5 : AIRFLOW
+      # ------------------------------------------------------------------------
+      - name: 🏗️ Build & Push - AIRFLOW
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/airflow/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-airflow:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🧹 Nettoyage post-Airflow
+        run: docker builder prune -f
+
+      # ------------------------------------------------------------------------
+      # SERVICE 6 : MLFLOW
+      # ------------------------------------------------------------------------
+      - name: 🏗️ Build & Push - MLFLOW
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/mlflow/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-mlflow:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ------------------------------------------------------------------------
+      # SERVICE 7 : MONGODB (Souvent une image officielle customisée ?)
+      # ------------------------------------------------------------------------
+      - name: 🏗️ Build & Push - MONGODB
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/mongodb/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-mongodb:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # ------------------------------------------------------------------------
+      # SERVICE 8 : PROMETHEUS
+      # ------------------------------------------------------------------------
+      - name: 🏗️ Build & Push - PROMETHEUS
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/prometheus/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-prometheus:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   # ==============================================================================
-  # JOB 2 : DÉPLOIEMENT SUR LE SERVEUR (DEPLOY SSH)
+  # JOB 2 : DÉPLOIEMENT (DEPLOY SSH)
   # ==============================================================================
   deploy-ssh:
-    # Ce job attend obligatoirement que le Build soit fini et réussi
-    needs: build-and-push
+    needs: build-sequential
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout du code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      # On copie les fichiers YAML (docker-compose) sur le serveur.
-      # Sans ça, le serveur ne connaîtrait pas les nouveaux volumes ou configs.
-      - name: 1. Transfert des configurations (SCP)
+      - name: Transfert configs (SCP)
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST_ORACLE }}
           username: ${{ secrets.USER_ORACLE }}
           key: ${{ secrets.SSH_KEY_ORACLE }}
-          source: "docker-compose*.yml"     # Copie tous les fichiers compose
+          source: "docker-compose*.yml"
           target: "/home/${{ secrets.USER_ORACLE }}/app"
 
-      # On se connecte en SSH pour piloter Docker à distance.
-      - name: 2. Connexion SSH et Mise à jour
+      - name: Déploiement SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST_ORACLE }}
@@ -132,29 +214,26 @@ jobs:
           script: |
             cd /home/${{ secrets.USER_ORACLE }}/app
             
-            # A. Authentification Docker sur le serveur
-            # Permet au serveur de télécharger vos images privées depuis GitHub
+            echo "🔑 Login Registry..."
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # B. Définition des variables d'environnement
-            # Ces variables disent à docker-compose : "N'utilise pas le build local,
-            # prends l'image qui est sur le registre en ligne".
-            # Docker va automatiquement choisir la version ARM64 grâce au build précédent.
+            echo "📦 Pulling images..."
             export REGISTRY=ghcr.io/${{ github.repository }}
-            export TRAINER_IMAGE=$REGISTRY/rakuten-trainer:latest
-            export PREDICTOR_IMAGE=$REGISTRY/rakuten-predictor:latest
+            
+            # Export variables pour tous les services
+            # export TRAINER_IMAGE=$REGISTRY/rakuten-trainer:latest
+            # export PREDICTOR_IMAGE=$REGISTRY/rakuten-predictor:latest
+            export API_IMAGE=$REGISTRY/rakuten-api:latest
+            # export STREAMLIT_IMAGE=$REGISTRY/rakuten-streamlit:latest
             export AIRFLOW_IMAGE=$REGISTRY/rakuten-airflow:latest
             export MLFLOW_IMAGE=$REGISTRY/rakuten-mlflow:latest
+            export MONGO_IMAGE=$REGISTRY/rakuten-mongodb:latest
             export PROMETHEUS_IMAGE=$REGISTRY/rakuten-prometheus:latest
 
-            # C. Téléchargement des nouvelles images (Pull)
             docker compose pull
             
-            # D. Redémarrage des services (Up)
-            # -d : détachement (en arrière-plan)
-            # --remove-orphans : nettoie les vieux conteneurs qui ne servent plus
+            echo "🚀 Restarting services..."
             docker compose up -d --remove-orphans
             
-            # E. Nettoyage final
-            # Supprime les vieilles images inutilisées pour libérer de la place
+            echo "🧹 Cleaning up server..."
             docker image prune -f
