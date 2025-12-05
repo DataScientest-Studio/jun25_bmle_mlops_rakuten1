@@ -20,11 +20,11 @@ jobs:
       packages: write
 
     steps:
-      # 0. NOM REPO EN MINUSCULES
+      # --- 🔡 CORRECTION MINUSCULES (Ajouté) ---
       - name: 🔡 Mettre le nom du repo en minuscules
         run: |
           echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-          
+
       # 1. OPTIMISATION INITIALE : On fait le vide dès le départ
       - name: 🧹 Libérer de l'espace disque (Free Disk Space)
         uses: jlumbroso/free-disk-space@main
@@ -62,7 +62,7 @@ jobs:
       #     context: .
       #     file: docker/train/Dockerfile
       #     push: true
-      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-trainer:latest
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-trainer:latest
       #     platforms: linux/amd64,linux/arm64
       #     cache-from: type=gha
       #     cache-to: type=gha,mode=max
@@ -81,7 +81,7 @@ jobs:
       #     context: .
       #     file: docker/predict/Dockerfile
       #     push: true
-      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-predictor:latest
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-predictor:latest
       #     platforms: linux/amd64,linux/arm64
       #     cache-from: type=gha
       #     cache-to: type=gha,mode=max
@@ -100,7 +100,7 @@ jobs:
           context: .
           file: docker/api/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-api:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-api:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -117,7 +117,7 @@ jobs:
       #     context: .
       #     file: docker/streamlit/Dockerfile
       #     push: true
-      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-streamlit:latest
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-streamlit:latest
       #     platforms: linux/amd64,linux/arm64
       #     cache-from: type=gha
       #     cache-to: type=gha,mode=max
@@ -134,7 +134,7 @@ jobs:
           context: .
           file: docker/airflow/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-airflow:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-airflow:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -151,13 +151,13 @@ jobs:
           context: .
           file: docker/mlflow/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-mlflow:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-mlflow:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       # ------------------------------------------------------------------------
-      # SERVICE 7 : MONGODB (Souvent une image officielle customisée ?)
+      # SERVICE 7 : MONGODB
       # ------------------------------------------------------------------------
       - name: 🏗️ Build & Push - MONGODB
         uses: docker/build-push-action@v5
@@ -165,7 +165,7 @@ jobs:
           context: .
           file: docker/mongodb/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-mongodb:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-mongodb:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -179,7 +179,7 @@ jobs:
           context: .
           file: docker/prometheus/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/rakuten-prometheus:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-prometheus:latest
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -217,7 +217,9 @@ jobs:
             echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "📦 Pulling images..."
-            export REGISTRY=ghcr.io/${{ github.repository }}
+            # Conversion en minuscules pour Docker
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            export REGISTRY=ghcr.io/$REPO_LOWER
             
             # Export variables pour tous les services
             # export TRAINER_IMAGE=$REGISTRY/rakuten-trainer:latest
