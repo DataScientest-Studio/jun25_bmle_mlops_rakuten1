@@ -4,6 +4,7 @@ include:
   - docker-compose-mlflow.yml
   - docker-compose-airflow.yml
   - docker-compose-promgraf.yml
+  - docker-compose-streamlit.yml 
 
 volumes:
   postgres-db-volume:
