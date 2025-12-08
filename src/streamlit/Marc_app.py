@@ -121,22 +121,79 @@ elif page == "3. Pipelines : train & predict + DB":
     st.title("Pipelines : train & predict + DB")
 
     st.markdown("""
-Pipeline Training :
-- Préprocessing texte (clean, TF-IDF)
-- Embeddings d'image (ResNet50)
-- Fusion texte + image
-- Entraînement XGBoost
-- Logging MLflow
+## 🎯 Objectif du pipeline
+Décrire les étapes complètes qui permettent de construire le modèle multimodal *texte + image*.
 
-Pipeline Prediction :
-- Récupération produit aléatoire
-- Même preprocessing
-- Chargement modèle
-- Retour catégorie prédite
+---
 
+## 📦 Pipeline Machine Learning
+
+### **1️⃣ Préprocessing texte**
+- Nettoyage HTML (BeautifulSoup)
+- Nettoyage accents, ponctuation, caractères spéciaux
+- Fusion désignation + description
+- TF-IDF 20 000 features (unigrammes & bigrammes)
+
+### **2️⃣ Préprocessing image**
+- Extraction embeddings **ResNet50 2048-D**
+- Resize + normalisation ImageNet
+- Gestion images manquantes
+- Sauvegarde `.npy`
+
+### **3️⃣ Fusion des features**
+- Conversion embeddings → sparse CSR
+- Concaténation TF-IDF + Image
+- Matrice unique `X_all_sparse.npz`
+
+### **4️⃣ Entraînement XGBoost**
+- Objective : multi:softprob
+- Split train/validation
+- Callback tqdm
+- Sauvegarde :
+  - `xgb_fusion.json`
+  - `label_encoder.joblib`
+  - `metrics_fusion.json`
+
+### **5️⃣ Évaluation**
+- Accuracy
+- F1 score pondéré
+- Matrice de confusion normalisée
+
+---
+
+## 📊 Suivi MLflow
+- Tracking paramètres
+- Tracking métriques
+- Stockage artefacts
+- Versionnement des modèles
 Base de données :
 - MongoDB contenant produits + métadonnées
 """)
+
+    st.subheader("🔁 Schéma du pipeline (agrandi)")
+
+    st.graphviz_chart("""
+digraph {
+    rankdir=LR;
+    node [shape=box, style="rounded,filled", color="#3477eb", fontcolor=white, fontsize=18];
+
+    A [label="CSV + Images\nDonnées brutes"];
+    B [label="Nettoyage texte\nHTML + regex"];
+    C [label="TF-IDF\n20k features"];
+    D [label="ResNet50\nEmbeddings 2048-D"];
+    E [label="Fusion sparse\nTF-IDF + Image"];
+    F [label="XGBoost\nTraining"];
+    G [label="Artefacts\nModèle + Encodeur + Metrics"];
+    H [label="MLflow\nTracking"];
+
+    A -> B -> C -> E;
+    A -> D -> E;
+    E -> F -> G;
+    F -> H;
+}
+""", use_container_width=True)
+
+
 
 # =====================================================
 # 4. API CLEMENT
