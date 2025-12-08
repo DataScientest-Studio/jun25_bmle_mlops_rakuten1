@@ -1,5 +1,6 @@
 import base64
 
+import numpy as np
 import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -47,7 +48,6 @@ class rakuten_predict_api:
                 login_method.verify_jwt_token(token)
                 X_test = pd.read_csv(os.path.join(RAW_DIR, "X_test_update.csv"))
                 row = X_test.sample(n=1)
-                print(row)
                 image_filename = (
                     "image_"
                     + str(row["imageid"].values[0])
@@ -62,8 +62,17 @@ class rakuten_predict_api:
                     result = predict(
                         row["designation"].values[0], row["description"].values[0], img
                     )
-                    result["designation"] = row["designation"].values[0]
-                    result["description"] = row["description"].values[0]
+                    result["designation"] = (
+                        ""
+                        if pd.isna(row["designation"].values[0])
+                        else row["designation"].values[0]
+                    )
+                    result["description"] = (
+                        ""
+                        if pd.isna(row["description"].values[0])
+                        else row["description"].values[0]
+                    )
+                    print(result)
                     return JSONResponse(
                         status_code=200, content={"detail": "La connexion a réussi", "data": result}
                     )
