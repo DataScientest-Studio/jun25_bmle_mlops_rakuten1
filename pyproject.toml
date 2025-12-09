@@ -58,7 +58,8 @@ api = [
     
     # Client HTTP pour tests
     "httpx>=0.25.2,<1.0.0",
-    "requests>=2.31.0,<3.0.0"
+    "requests>=2.31.0,<3.0.0",
+    "prometheus_fastapi_instrumentator==6.1.0"
 ]
 
 # ============================================================================

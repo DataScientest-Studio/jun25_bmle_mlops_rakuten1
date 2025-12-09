@@ -84,9 +84,9 @@ def clean_data(
             image_path = os.path.join(images_dir, "image_train", image_filename)
             if os.path.exists(image_path):
                 img = Image.open(image_path)
-                doc = clean_one_row(
-                    row["designation"].fillna(""), row["description"].fillna(""), img
-                )
+                row["designation"] = "" if pd.isna(row["designation"]) else row["designation"]
+                row["description"] = "" if pd.isna(row["description"]) else row["description"]
+                doc = clean_one_row(row["designation"], row["description"], img)
                 doc["id"] = row["id"]
                 doc["prdtypecode"] = int(y_train.loc[index, "prdtypecode"])
                 batch.append(doc)
@@ -114,9 +114,11 @@ def clean_data(
             image_path = os.path.join(images_dir, "image_test", image_filename)
             if os.path.exists(image_path):
                 img = Image.open(image_path)
+                row["designation"] = "" if pd.isna(row["designation"]) else row["designation"]
+                row["description"] = "" if pd.isna(row["description"]) else row["description"]
                 doc = clean_one_row(
-                    row["designation"].fillna(""),
-                    row["description"].fillna(""),
+                    row["designation"],
+                    row["description"],
                     Image.open(image_path),
                 )
                 doc["id"] = row["id"]

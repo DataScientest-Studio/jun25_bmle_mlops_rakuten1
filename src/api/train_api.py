@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 import pandas as pd
 
 from src.train.train import train
@@ -52,3 +53,4 @@ class rakuten_train_api:
 entrainement = FastAPI(title="Rakuten")
 rakuten = rakuten_train_api()
 entrainement.include_router(rakuten.router)
+Instrumentator().instrument(entrainement).expose(entrainement)
