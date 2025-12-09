@@ -5,13 +5,19 @@ stop:
 	docker compose down
 
 train:
+	docker compose up -d trainer
+
+train_build:
 	docker compose up -d --build trainer
 
 train_stop:
 	docker compose down trainer
 
 predict:
-	docker compose up -d --build predictor
+	docker compose up -d predictor
+
+predict_build:
+	docker compose up -d --build predict
 
 predict_stop:
 	docker compose down predictor
