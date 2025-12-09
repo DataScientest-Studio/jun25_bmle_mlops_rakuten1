@@ -4,6 +4,7 @@ import numpy as np
 import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 import pandas as pd
 
 from PIL import Image
@@ -87,3 +88,4 @@ class rakuten_predict_api:
 prediction = FastAPI(title="Rakuten")
 rakuten = rakuten_predict_api()
 prediction.include_router(rakuten.router)
+Instrumentator().instrument(prediction).expose(prediction)
