@@ -50,19 +50,19 @@ airflow_stop:
 	docker compose down postgres redis airflow-webserver airflow-scheduler airflow-worker airflow-init
 
 promgraf:
-	docker compose -d prometheus grafana node-exporter
+	docker compose up -d prometheus grafana node-exporter
 
 promgraf_build:
-	docker compose -d --build prometheus grafana node-exporter
+	docker compose up -d --build prometheus grafana node-exporter
 	
 promgraf_stop:
 	docker compose down prometheus grafana node-exporter
 
 streamlit:
-	docker compose -d streamlit
+	docker compose up -d streamlit
 
 streamlit_build:
-	docker compose -d --build streamlit
+	docker compose up -d --build streamlit
 	
 streamlit_stop:
 	docker compose down streamlit
