@@ -9,6 +9,7 @@ authors = [{name = "MLOps Team", email = "mlops@rakuten.com"}]
 classifiers = [
     "Programming Language :: Python :: 3.11",
     "Operating System :: OS Independent",
+    "Development Status :: 3 - Alpha",
 ]
 
 # ============================================================================
@@ -18,10 +19,6 @@ dependencies = [
     "pydantic>=2.5.0,<3.0.0",
     "pydantic-settings>=2.1.0,<3.0.0",
     "python-dotenv>=1.0.0",
-    # Data Science Core (Versions unifiées ici pour éviter conflits)
-    "pandas>=2.1.0,<2.3.0",
-    "numpy>=1.26.0,<2.0.0",
-    "scikit-learn>=1.3.0,<2.0.0",
 ]
 
 [project.optional-dependencies]
@@ -35,7 +32,8 @@ api = [
     "passlib[bcrypt]>=1.7.4,<2.0.0",
     "python-multipart>=0.0.6",
     "prometheus_fastapi_instrumentator>=6.1.0",
-    "requests>=2.31.0,<3.0.0", # Utile pour les tests API aussi
+    "httpx>=0.25.0", # Requis pour TestClient et requêtes internes
+    "requests>=2.31.0,<3.0.0",
 ]
 
 # --- DATABASE (MongoDB) ---
@@ -45,44 +43,73 @@ database = [
     "beanie>=1.23.0,<2.0.0",
 ]
 
-# --- ETL & TRAINING ---
-# Hérite implicitement de pandas/numpy/sklearn définis dans dependencies
-etl = [
+# --- DATA SCIENCE (ETL + TRAINING + EVAL) ---
+# Fusion intelligente de vos anciens groupes 'etl' et 'datascience' pour cohérence
+datascience = [
+    "pandas>=2.1.0,<2.3.0",
+    "numpy>=1.26.0,<2.0.0",
+    "scikit-learn>=1.3.0,<2.0.0",
+    "joblib>=1.3.0,<2.0.0",
     "beautifulsoup4>=4.11.0",
     "tqdm>=4.66.0",
     "Pillow>=10.0.0,<11.0.0",
     "PyYAML>=6.0",
     "xgboost>=2.0.0,<3.0.0",
-    # Version spécifique PyTorch (CPU par défaut, GPU via index uv si besoin)
+    # Visualisation
+    "matplotlib>=3.8.0,<4.0.0",
+    "seaborn>=0.13.0,<1.0.0",
+    # Deep Learning (Torch Configuré via uv.sources plus bas)
     "torch>=2.1.0,<3.0.0",
     "torchvision>=0.16.0,<1.0.0",
-    # Version figée pour compatibilité code existant
+    # Monitoring Data Drift
     "evidently==0.6.7",
 ]
+# Alias 'etl' pointant vers datascience pour rétro-compatibilité scripts
+etl = ["mlops-rakuten[datascience]"]
 
 # --- ORCHESTRATION ---
 airflow = [
     "apache-airflow>=2.8.0,<3.0.0",
     "apache-airflow-providers-mongo>=3.5.0",
     "apache-airflow-providers-docker>=3.9.0",
+    "apache-airflow-providers-http>=4.7.0",
+    "apache-airflow-providers-celery>=3.5.0",
 ]
 
-# --- MLFLOW ---
+# --- MLFLOW SERVEUR (Container isolé) ---
 mlflow = [
     "mlflow>=2.9.0,<3.0.0",
     "boto3>=1.34.0",
     "psycopg2-binary>=2.9.0",
 ]
 
+# --- MLFLOW CLIENT (Pour API/Training) ---
+mlflow-client = [
+    "mlflow-skinny>=2.9.0,<3.0.0",
+]
+
+# --- MONITORING (Prometheus/Grafana) ---
+monitoring = [
+    "prometheus-client>=0.19.0",
+    "grafana-client>=3.5.0",
+    "psutil>=5.9.0",
+]
+
 # --- DEV & TESTS ---
 dev = [
     "ruff>=0.8.0",
+    "mypy>=1.7.0",
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "pytest-asyncio>=0.21.0",
-    "httpx>=0.25.0", # Requis pour TestClient FastAPI
+    "pytest-mock>=3.12.0",
+    "pre-commit>=3.5.0",
+    "mkdocs>=1.5.0",
 ]
 
+# ============================================================================
+# BUILD SYSTEM (Hatchling - Moderne)
+# ============================================================================
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
@@ -90,25 +117,68 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["src"]
 
-# Config Pytest
+# ============================================================================
+# CONFIGURATIONS OUTILS (Restaurées)
+# ============================================================================
+
+# --- PYTEST ---
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
 addopts = "-v --disable-warnings"
-pythonpath = ["."]  # Ajoute la racine au path pour les tests locaux
+pythonpath = ["."]
 
-# Config Ruff
+# --- RUFF (Linter & Formatter) ---
 [tool.ruff]
 line-length = 88
 target-version = "py311"
 
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+]
+ignore = ["E501"] # Line too long (géré par formatter)
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# --- MYPY (Type Checker) ---
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false # Permissif pour le moment
+ignore_missing_imports = true
+
+# --- COVERAGE ---
+[tool.coverage.run]
+source = ["src"]
+omit = ["tests/*", "**/__init__.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
+
+# ============================================================================
+# CONFIGURATION UV (PyTorch GPU/CPU)
+# ============================================================================
 [tool.uv.sources]
 torch = [
-  # Linux : On force CUDA 12.1 (très stable et dispo)
+  # Linux : CUDA 12.1 (Stable)
   { index = "pytorch-cu121", marker = "sys_platform == 'linux'" },
-  # Windows : On force aussi CUDA 12.1 (car dispo sous Windows !)
+  # Windows : CUDA 12.1 (Compatible)
   { index = "pytorch-cu121", marker = "sys_platform == 'win32'" },
-  # Mac : CPU par défaut (géré par PyPI standard)
+  # Mac : CPU (auto)
 ]
 torchvision = [
   { index = "pytorch-cu121", marker = "sys_platform == 'linux'" },
@@ -119,4 +189,3 @@ torchvision = [
 name = "pytorch-cu121"
 url = "https://download.pytorch.org/whl/cu121"
 explicit = true
-
