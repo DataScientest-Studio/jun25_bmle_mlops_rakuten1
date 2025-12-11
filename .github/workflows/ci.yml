@@ -58,10 +58,10 @@ jobs:
       - name: Create virtual environment via uv
         run: uv venv
 
-      - name: Synchronize dependencies (all extras) with uv
+      - name: Synchronize dependencies (all-extras) with uv
         run: |
           source .venv/bin/activate
-          uv sync --extra all
+          uv sync --all-extras
 
       - name: Lint and format with ruff
         run: |
