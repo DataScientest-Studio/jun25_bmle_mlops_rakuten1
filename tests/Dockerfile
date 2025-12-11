@@ -25,7 +25,7 @@ COPY pyproject.toml uv.lock ./
 # On exporte le lockfile en format requirements et on l'installe directement
 # --extra api,database,etl : pour inclure vos groupes optionnels
 # --system : installe dans le python global du conteneur
-RUN uv export --frozen --format=requirements-txt --no-dev \
+RUN uv export --frozen --format=requirements-txt \
     --extra api --extra database --extra etl --extra dev\
     > requirements.txt && \
     uv pip install --system --no-cache -r requirements.txt
