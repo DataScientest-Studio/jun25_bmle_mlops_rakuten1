@@ -1,52 +1,48 @@
 FROM python:3.11-slim
 
 LABEL maintainer="MLOps Rakuten Team"
-LABEL description="FastAPI Application with OAuth2 Authentication"
+LABEL description="Test Container (System Install)"
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    # Configure uv pour utiliser le système directement ou un chemin fixe
-    UV_SYSTEM_PYTHON=1
+    # Ajout explicite du dossier courant au PYTHONPATH pour trouver vos modules
+    PYTHONPATH=/app
 
 WORKDIR /app
 
-# Installation des dépendances système
+# Installation système minimale
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copier et installer uv
+# Copie de uv
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
-# 1. Copier les fichiers de définition de projet
+# 1. Copie des fichiers de définition
 COPY pyproject.toml uv.lock ./
 
-# 2. Copier le code source (nécessaire pour installer le projet lui-même)
+# 2. Installation SYSTEM-WIDE (Sans venv)
+# On exporte le lockfile en format requirements et on l'installe directement
+# --extra api,database,etl : pour inclure vos groupes optionnels
+# --system : installe dans le python global du conteneur
+RUN uv export --frozen --format=requirements-txt --no-dev \
+    --extra api --extra database --extra etl --extra dev\
+    > requirements.txt && \
+    uv pip install --system --no-cache -r requirements.txt
+
+# 3. Copie du code source
 COPY src/ /app/src/
 
-# 3. Installation avec uv sync
-# --frozen : s'assure qu'on utilise exactement les versions du uv.lock
-# --no-install-project : si vous vouliez installer juste les deps (mais ici on veut tout)
-# --extra : pour activer vos groupes optionnels
-RUN uv sync --frozen --no-cache \
-    --extra api \
-    --extra database \
-    --extra etl
-
-# Note : uv sync installe par défaut dans .venv
-# Il faut donc s'assurer que le PATH est à jour pour la suite
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Créer un utilisateur non-root
+# Création utilisateur non-root (Sécurité)
 RUN useradd -m -u 1000 appuser && \
     chown -R appuser:appuser /app
 USER appuser
 
 # Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/ || exit 1
 
 EXPOSE 8000
 
-# Plus besoin de 'uv run', car on a mis le venv dans le PATH
-CMD ["uvicorn", "src.api.api:api", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Lancement direct (uvicorn est maintenant dans le PATH global par défaut)
+CMD ["uvicorn", "src.api.api:api", "--host", "0.0.0.0", "--port", "8000"]
