@@ -89,9 +89,19 @@ jobs:
       - name: Wait for API to be ready
         run: |
           echo "Waiting for API to be ready..."
-          # On attend que l'endpoint hello (ou root) réponde
-          timeout 30s bash -c 'until curl --silent --fail http://localhost:8000/ > /dev/null; do sleep 2; done'
-          echo "API is ready!"
+          # On tente pendant 120s. Si ça échoue, on continue pour afficher les logs juste après
+          timeout 120s bash -c 'until curl --silent --fail http://localhost:8000/ > /dev/null; do sleep 2; done' || true
+          
+          # Vérification finale et affichage des logs en cas d'erreur
+          if ! curl --silent --fail http://localhost:8000/ > /dev/null; then
+            echo "❌ API failed to start within timeout."
+            echo "=== CONTAINER LOGS ==="
+            docker logs test_api_container
+            echo "======================"
+            exit 1
+          fi
+          echo "✅ API is ready!"
+
 
       - name: Test with pytest
         run: |
