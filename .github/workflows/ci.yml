@@ -42,6 +42,29 @@ jobs:
         ruff format . --diff
       continue-on-error: true
 
+    # 1. Construire l'image depuis le dossier tests
+    # -f indique le chemin du fichier, le point final (.) indique le contexte racine
+    - name: Build Docker image from tests folder
+      run: docker build -f tests/Dockerfile -t test_api_image .
+
+    # 2. Lancer le conteneur avec un nom préfixé (test_...)
+    - name: Run Test API container
+      run: |
+        docker run -d --name test_api_container \
+          -p 8000:8000 \
+          -p 8080:8080 \
+          -e PORT_TRAIN=8000 \
+          -e PORT_PREDICT=8080 \
+          test_api_image
+
+    # 3. Attendre que l'API soit prête (Healthcheck sur /hello ou /)
+    - name: Wait for API to be ready
+      run: |
+        echo "Waiting for API to be ready..."
+        # On attend que l'endpoint hello (ou root) réponde
+        timeout 30s bash -c 'until curl --silent --fail http://localhost:8000/ > /dev/null; do sleep 2; done'
+        echo "API is ready!"
+
     - name: Test with pytest
       run: |
         source .venv/bin/activate

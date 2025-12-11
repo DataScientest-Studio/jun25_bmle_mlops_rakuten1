@@ -211,6 +211,89 @@ GitHub Actions :
 - Tests unitaires
 - Build & Push Docker
 - Déploiement automatique
+                
+Le pipeline est divisé en deux flux distincts : une chaîne d'intégration pour valider la qualité du code (ci.yml) et une chaîne de déploiement pour la mise en production (cd.yml).
+1. Intégration Continue (CI)
+
+Le workflow CI est déclenché automatiquement à chaque push ou pull request sur la branche master. Son objectif est de garantir la qualité du code Python avant toute fusion ou déploiement.
+Étapes clés du pipeline :
+
+    Environnement : Exécution sur une machine virtuelle Ubuntu avec Python 3.11.
+
+​
+
+Gestion des dépendances : Utilisation de uv (un gestionnaire de paquets ultra-rapide) pour créer l'environnement virtuel et installer les dépendances du projet.
+
+​
+
+Qualité du code (Linting & Formatting) :
+
+    Le code est analysé et vérifié par ruff (remplaçant moderne de outils comme Flake8 ou Black).
+
+    Le pipeline échoue si le code ne respecte pas les normes de formatage définies.
+
+    ​
+
+Tests automatisés :
+
+    Lancement des tests unitaires via pytest.
+
+    Le script vérifie intelligemment la présence de fichiers de test avant de lancer la commande pour éviter les erreurs inutiles.
+
+Rapport de couverture : Upload automatique des rapports de couverture de code vers Codecov si les tests réussissent.
+
+    ​
+
+2. Déploiement Continu (CD)
+
+Le workflow CD est orchestré pour se lancer uniquement après la réussite du workflow CI. Il gère la construction des images Docker et leur déploiement sur un serveur distant (infrastructure Oracle Cloud).
+Construction des Images (Build & Push)
+
+Ce job prépare les conteneurs pour la production. Pour optimiser l'espace disque, les services sont construits séquentiellement avec un nettoyage systématique entre chaque étape.
+
+​
+
+    Registre de conteneurs : Les images sont stockées sur le GitHub Container Registry (GHCR).
+
+    Services construits :
+
+        Le pipeline construit et pousse actuellement les images pour : API (FastAPI), Airflow, MLflow, MongoDB, et Prometheus.
+
+​
+
+Note importante : Les services Streamlit (Frontend), Trainer, et Predictor sont actuellement commentés dans le fichier cd.yml et ne sont donc pas construits automatiquement pour le moment.
+
+        ​
+
+Déploiement (Deploy SSH)
+
+Une fois les images construites, le déploiement s'effectue via SSH sur le serveur cible.
+
+    Transfert de configuration : Copie des fichiers docker-compose*.yml vers le serveur via SCP.
+
+​
+
+Mise à jour des services :
+
+    Connexion au registre GHCR depuis le serveur.
+
+    Téléchargement des nouvelles images (docker compose pull).
+
+    Redémarrage des conteneurs en tâche de fond (docker compose up -d).
+
+    Nettoyage des anciennes images inutilisées pour libérer de l'espace (docker image prune).
+
+        ​
+
+| Composant               | Outils / Technologies               |
+| ----------------------- | ----------------------------------- |
+| Gestionnaire de paquets | uv (Performance)                    |
+| Linter / Formatter      | ruff                                |
+| Tests                   | pytest + Codecov                    |
+| Conteneurisation        | Docker + Docker Buildx (Multi-arch) |
+| Registre d'images       | GitHub Container Registry (ghcr.io) |
+| Déploiement             | SSH + Docker Compose                |
+                
 """)
 
 # =====================================================
