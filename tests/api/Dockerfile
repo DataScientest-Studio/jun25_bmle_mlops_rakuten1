@@ -30,10 +30,13 @@ RUN uv pip install --system --no-cache \
     --extra api \
     --extra database \
     --extra etl \
+    --extra mlflow \
     --extra dev
 
 # 3. Copie du code source
 COPY src/ /app/src/
+COPY tests/api/fixtures/X_test_sample.csv /app/data/raw/X_test_update.csv
+COPY tests/api/fixtures/image_482661_product_929337.jpg /app/data/raw/images/images/image_test/image_482661_product_929337.jpg
 
 # Création utilisateur non-root (Sécurité)
 RUN useradd -m -u 1000 appuser && \
@@ -42,9 +45,9 @@ USER appuser
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/ || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 EXPOSE 8000
 
 # Lancement direct (uvicorn est maintenant dans le PATH global par défaut)
-CMD ["uvicorn", "src.api.api:api", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.api.predict_api:prediction", "--host", "0.0.0.0", "--port", "8080", "--workers", "4"]

@@ -46,7 +46,7 @@ ENV/
 .gitattributes
 
 # ── TESTS ET CI/CD ──
-tests/
+!tests/api/fixtures
 .pytest_cache/
 .coverage
 htmlcov/
