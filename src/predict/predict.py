@@ -109,7 +109,9 @@ def predict(designation: str, description: str, image: Image) -> dict:
     data_cleaned = clean_one_row(designation, description, image)
     #    print(data_cleaned)
     df_clean = pd.DataFrame([data_cleaned])
-    df_clean["text"] = df_clean["designation"].fillna("") + " " + df_clean["description"].fillna("")
+    df_clean["designation"] = df_clean["designation"].fillna("")
+    df_clean["description"] = df_clean["description"].fillna("")
+    df_clean["text"] = df_clean["designation"] + " " + df_clean["description"]
 
     preprocessor = Preprocessor(tfidf=tfidf)
     X_tfidf, X_img = preprocessor.preprocess_data(df_clean)

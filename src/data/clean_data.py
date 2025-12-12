@@ -45,6 +45,8 @@ def clean_one_row(designation, description, image):
 def clean_data(
     input_dir="/app/data/raw", images_dir="/app/data/raw/images/images", nbre_lignes=1000
 ):
+    BATCH_SIZE = 5000
+    batch = []
     # Chargement des fichiers CSV
     print("Chargement des fichiers CSV...")
     X_train = pd.read_csv(os.path.join(input_dir, "X_train_update.csv"))
@@ -82,13 +84,23 @@ def clean_data(
             image_path = os.path.join(images_dir, "image_train", image_filename)
             if os.path.exists(image_path):
                 img = Image.open(image_path)
+                row["designation"] = "" if pd.isna(row["designation"]) else row["designation"]
+                row["description"] = "" if pd.isna(row["description"]) else row["description"]
                 doc = clean_one_row(row["designation"], row["description"], img)
                 doc["id"] = row["id"]
                 doc["prdtypecode"] = int(y_train.loc[index, "prdtypecode"])
-                X_train_cleaned.insert_one(doc)
-
+                batch.append(doc)
+                if len(batch) >= BATCH_SIZE:
+                    X_train_cleaned.insert_many(batch, ordered=False)
+                    batch = []
+            #            X_train_cleaned.insert_one(doc)
             else:
                 print(f"Image non trouvée : {image_filename}")
+
+        # flusher le dernier batch
+        if batch:
+            X_train_cleaned.insert_many(batch, ordered=False)
+            batch = []
 
         # Nettoyage et insertion des données de test
         for _, row in tqdm(
@@ -102,12 +114,26 @@ def clean_data(
             image_path = os.path.join(images_dir, "image_test", image_filename)
             if os.path.exists(image_path):
                 img = Image.open(image_path)
-                doc = clean_one_row(row["designation"], row["description"], Image.open(image_path))
+                row["designation"] = "" if pd.isna(row["designation"]) else row["designation"]
+                row["description"] = "" if pd.isna(row["description"]) else row["description"]
+                doc = clean_one_row(
+                    row["designation"],
+                    row["description"],
+                    Image.open(image_path),
+                )
                 doc["id"] = row["id"]
-                X_test_cleaned.insert_one(doc)
+                batch.append(doc)
+                if len(batch) >= BATCH_SIZE:
+                    X_test_cleaned.insert_many(batch, ordered=False)
+                    batch = []
+            #                X_test_cleaned.insert_one(doc)
 
             else:
                 print(f"Image non trouvée : {image_filename}")
+
+        # flusher le dernier batch
+        if batch:
+            X_test_cleaned.insert_many(batch, ordered=False)
 
 
 def calcul_lignes_a_lire(date_lancement: str) -> int:

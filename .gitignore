@@ -103,3 +103,7 @@ tests/test.yml
 tests/test3.yml
 tests/test.py
 
+venv/
+
+# Perso Seb
+*.v2

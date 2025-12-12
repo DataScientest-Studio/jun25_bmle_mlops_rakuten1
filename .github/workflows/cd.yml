@@ -9,7 +9,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # On ne peut pas transformer en minuscule ici directement
 
 jobs:
   build-sequential:
@@ -18,15 +17,26 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     steps:
-      # --- 🔡 CORRECTION MINUSCULES (Ajouté) ---
       - name: 🔡 Mettre le nom du repo en minuscules
         run: |
           echo "IMAGE_NAME_LOWER=${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
-      # 1. OPTIMISATION INITIALE : On fait le vide dès le départ
-      - name: 🧹 Libérer de l'espace disque (Free Disk Space)
+      # --- VERIFICATION & NETTOYAGE DISQUE ---
+      - name: Check & Free Disk Space
+        run: |
+          FREE_SPACE=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
+          echo "Espace libre actuel : ${FREE_SPACE}Go"
+          if [ "$FREE_SPACE" -lt 25 ]; then
+            echo "⚠️ Espace insuffisant. Nettoyage activé."
+            echo "CLEAN_NEEDED=true" >> $GITHUB_ENV
+          else
+            echo "✅ Espace suffisant."
+            echo "CLEAN_NEEDED=false" >> $GITHUB_ENV
+          fi
+
+      - name: 🧹 Libérer de l'espace disque (Si nécessaire)
+        if: env.CLEAN_NEEDED == 'true'
         uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: true
@@ -34,14 +44,14 @@ jobs:
           dotnet: true
           haskell: true
           large-packages: true
-          docker-images: false
+          docker-images: false # On garde les images de base pour accélérer
           swap-storage: false
 
       - name: Récupération du code source
         uses: actions/checkout@v4
 
-      - name: Configuration de QEMU (Multi-Arch)
-        uses: docker/setup-qemu-action@v3
+      # - name: Configuration de QEMU (Multi-Arch)
+      #   uses: docker/setup-qemu-action@v3
 
       - name: Configuration de Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -54,7 +64,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # ------------------------------------------------------------------------
-      # SERVICE 1 : TRAINER (Probablement le plus gros)
+      # SERVICE 1 : TRAINER (Désactivé)
       # ------------------------------------------------------------------------
       # - name: 🏗️ Build & Push - TRAINER
       #   uses: docker/build-push-action@v5
@@ -63,17 +73,17 @@ jobs:
       #     file: docker/train/Dockerfile
       #     push: true
       #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-trainer:latest
-      #     platforms: linux/amd64,linux/arm64
+      #     platforms: linux/amd64
       #     cache-from: type=gha
       #     cache-to: type=gha,mode=max
-
+      
       # - name: 🧹 Nettoyage post-Trainer
       #   run: |
       #     docker system prune -a -f --volumes
       #     docker builder prune -f
 
       # ------------------------------------------------------------------------
-      # SERVICE 2 : PREDICTOR
+      # SERVICE 2 : PREDICTOR (Désactivé)
       # ------------------------------------------------------------------------
       # - name: 🏗️ Build & Push - PREDICTOR
       #   uses: docker/build-push-action@v5
@@ -82,7 +92,7 @@ jobs:
       #     file: docker/predict/Dockerfile
       #     push: true
       #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-predictor:latest
-      #     platforms: linux/amd64,linux/arm64
+      #     platforms: linux/amd64
       #     cache-from: type=gha
       #     cache-to: type=gha,mode=max
 
@@ -92,7 +102,7 @@ jobs:
       #     docker builder prune -f
 
       # ------------------------------------------------------------------------
-      # SERVICE 3 : API (FASTAPI)
+      # SERVICE 3 : API (FASTAPI) - ACTIF
       # ------------------------------------------------------------------------
       - name: 🏗️ Build & Push - API
         uses: docker/build-push-action@v5
@@ -101,7 +111,8 @@ jobs:
           file: docker/api/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-api:latest
-          platforms: linux/amd64,linux/arm64
+          # platforms: linux/amd64,linux/arm64 <-- DESACTIVÉ TEMPORAIREMENT
+          platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -128,113 +139,98 @@ jobs:
       # ------------------------------------------------------------------------
       # SERVICE 5 : AIRFLOW
       # ------------------------------------------------------------------------
-      - name: 🏗️ Build & Push - AIRFLOW
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/airflow/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-airflow:latest
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # - name: 🏗️ Build & Push - AIRFLOW
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: docker/airflow/Dockerfile
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-airflow:latest
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      - name: 🧹 Nettoyage post-Airflow
-        run: docker builder prune -f
+      # - name: 🧹 Nettoyage post-Airflow
+      #   run: docker builder prune -f
 
-      # ------------------------------------------------------------------------
-      # SERVICE 6 : MLFLOW
-      # ------------------------------------------------------------------------
-      - name: 🏗️ Build & Push - MLFLOW
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/mlflow/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-mlflow:latest
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # # ------------------------------------------------------------------------
+      # # SERVICE 6 : MLFLOW
+      # # ------------------------------------------------------------------------
+      # - name: 🏗️ Build & Push - MLFLOW
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: docker/mlflow/Dockerfile
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-mlflow:latest
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      # ------------------------------------------------------------------------
-      # SERVICE 7 : MONGODB
-      # ------------------------------------------------------------------------
-      - name: 🏗️ Build & Push - MONGODB
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/mongodb/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-mongodb:latest
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # # ------------------------------------------------------------------------
+      # # SERVICE 7 : MONGODB
+      # # ------------------------------------------------------------------------
+      # - name: 🏗️ Build & Push - MONGODB
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: docker/mongodb/Dockerfile
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-mongodb:latest
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-      # ------------------------------------------------------------------------
-      # SERVICE 8 : PROMETHEUS
-      # ------------------------------------------------------------------------
-      - name: 🏗️ Build & Push - PROMETHEUS
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: docker/prometheus/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-prometheus:latest
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # # ------------------------------------------------------------------------
+      # # SERVICE 8 : PROMETHEUS
+      # # ------------------------------------------------------------------------
+      # - name: 🏗️ Build & Push - PROMETHEUS
+      #   uses: docker/build-push-action@v5
+      #   with:
+      #     context: .
+      #     file: docker/prometheus/Dockerfile
+      #     push: true
+      #     tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME_LOWER }}/rakuten-prometheus:latest
+      #     platforms: linux/amd64,linux/arm64
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
 
-  # ==============================================================================
-  # JOB 2 : DÉPLOIEMENT (DEPLOY SSH)
-  # ==============================================================================
-  deploy-ssh:
-    needs: build-sequential
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Transfert configs (SCP)
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST_ORACLE }}
-          username: ${{ secrets.USER_ORACLE }}
-          key: ${{ secrets.SSH_KEY_ORACLE }}
-          source: "docker-compose*.yml"
-          target: "/home/${{ secrets.USER_ORACLE }}/app"
-
-      - name: Déploiement SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST_ORACLE }}
-          username: ${{ secrets.USER_ORACLE }}
-          key: ${{ secrets.SSH_KEY_ORACLE }}
-          script: |
-            cd /home/${{ secrets.USER_ORACLE }}/app
-            
-            echo "🔑 Login Registry..."
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            echo "📦 Pulling images..."
-            # Conversion en minuscules pour Docker
-            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            export REGISTRY=ghcr.io/$REPO_LOWER
-            
-            # Export variables pour tous les services
-            # export TRAINER_IMAGE=$REGISTRY/rakuten-trainer:latest
-            # export PREDICTOR_IMAGE=$REGISTRY/rakuten-predictor:latest
-            export API_IMAGE=$REGISTRY/rakuten-api:latest
-            # export STREAMLIT_IMAGE=$REGISTRY/rakuten-streamlit:latest
-            export AIRFLOW_IMAGE=$REGISTRY/rakuten-airflow:latest
-            export MLFLOW_IMAGE=$REGISTRY/rakuten-mlflow:latest
-            export MONGO_IMAGE=$REGISTRY/rakuten-mongodb:latest
-            export PROMETHEUS_IMAGE=$REGISTRY/rakuten-prometheus:latest
-
-            docker compose pull
-            
-            echo "🚀 Restarting services..."
-            docker compose up -d --remove-orphans
-            
-            echo "🧹 Cleaning up server..."
-            docker image prune -f
+# ==============================================================================
+# JOB 2 : DÉPLOIEMENT (DEPLOY SSH) - DÉSACTIVÉ TEMPORAIREMENT
+# ==============================================================================
+# deploy-ssh:
+#   needs: build-sequential
+#   if: ${{ github.event.workflow_run.conclusion == 'success' }}
+#   runs-on: ubuntu-latest
+#   steps:
+#     - name: Checkout
+#       uses: actions/checkout@v4
+#     
+#     - name: Transfert configs (SCP)
+#       uses: appleboy/scp-action@master
+#       with:
+#         host: ${{ secrets.HOST_ORACLE }}
+#         username: ${{ secrets.USER_ORACLE }}
+#         key: ${{ secrets.SSH_KEY_ORACLE }}
+#         source: "docker-compose*.yml"
+#         target: "/home/${{ secrets.USER_ORACLE }}/app"
+#
+#     - name: Déploiement SSH
+#       uses: appleboy/ssh-action@master
+#       with:
+#         host: ${{ secrets.HOST_ORACLE }}
+#         username: ${{ secrets.USER_ORACLE }}
+#         key: ${{ secrets.SSH_KEY_ORACLE }}
+#         script: |
+#           cd /home/${{ secrets.USER_ORACLE }}/app
+#           echo "🔑 Login Registry..."
+#           echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+#           echo "📦 Pulling images..."
+#           REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+#           export REGISTRY=ghcr.io/$REPO_LOWER
+#           export API_IMAGE=$REGISTRY/rakuten-api:latest
+#           docker compose pull
+#           echo "🚀 Restarting services..."
+#           docker compose up -d --remove-orphans
+#           echo "🧹 Cleaning up server..."
+#           docker image prune -f
