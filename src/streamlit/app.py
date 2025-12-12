@@ -24,7 +24,7 @@ page = st.sidebar.radio(
         "7. Monitoring : Grafana / Prometheus",
         "8. CI/CD : GitHub Actions",
         "9. Conclusion & Opportunités futures",
-    ]
+    ],
 )
 
 # =====================================================
@@ -32,7 +32,6 @@ page = st.sidebar.radio(
 # =====================================================
 
 if page == "Démo : prédiction Rakuten":
-
     st.title("Démo : prédiction Rakuten")
 
     # ---------- LOGIN ----------
@@ -85,7 +84,6 @@ if page == "Démo : prédiction Rakuten":
 
 
 elif page == "1. Intro : contexte & objectifs":
-
     st.title("🎯 Introduction : Contexte & Objectifs du Projet")
 
     st.markdown("""
@@ -251,7 +249,6 @@ Environnement :
 
 
 elif page == "3. Pipelines : train & predict + DB":
-
     st.title("🔁 Pipelines : Train, Predict & Base de Données")
 
     st.markdown("""
@@ -372,7 +369,8 @@ Scripts associés :
 # 🔁 Schéma global du pipeline
     """)
 
-    st.graphviz_chart("""
+    st.graphviz_chart(
+        """
 digraph {
     rankdir=LR;
     node [shape=box, style="rounded,filled", color="#1E88E5", fontcolor=white, fontsize=18];
@@ -387,8 +385,9 @@ digraph {
 
     A -> B -> BB -> C -> D -> E -> F;
 }
-""", width="stretch")
-
+""",
+        width="stretch",
+    )
 
 
 # =====================================================
@@ -411,13 +410,54 @@ FastAPI expose :
 
 elif page == "5. Model Tracking : MLflow":
     st.title("Model Tracking : MLflow")
+
     st.markdown("""
-MLflow utilisé pour :
-- Tracking des runs
-- Paramètres / hyperparamètres
-- Métriques
-- Artefacts (modèles, encoders)
-""")
+### 🎯 Rôle de MLflow dans le projet
+
+MLflow est utilisé comme **serveur central de suivi des expériences** :
+- Suivi des runs d'entraînement (un run = une exécution du script `train.py`)
+- Journalisation des **paramètres / hyperparamètres** du modèle XGBoost
+- Suivi des **métriques** (accuracy, F1, etc.)
+- Stockage des **artefacts** : modèle, TF-IDF, LabelEncoder, logs...
+[web:35][web:81][web:86]
+    """)
+
+    st.markdown("""
+### 🏗️ Infrastructure MLflow (Docker + MinIO)
+
+- Service **MLflow** dans un conteneur dédié (port 5000) avec backend SQLite pour les métadonnées des runs
+- Service **MinIO (S3)** pour stocker les artefacts dans le bucket `mlflow-artifacts`
+- Variables d'environnement (`MLFLOW_HOST`, `MLFLOW_S3_ENDPOINT_URL`, clés MinIO) pour connecter les scripts au tracking server
+[web:1][web:10][web:16][web:89]
+    """)
+
+    st.markdown("""
+### 🧪 Tracking côté entraînement (`train.py`)
+
+- Le script `train()` initialise l'expérience `rakuten_xgb_fusion` et démarre un **run MLflow**
+- Log des hyperparamètres XGBoost (profondeur, learning rate, device CPU/GPU...)
+- Log des métriques de validation (accuracy, F1) et du modèle XGBoost + artefacts de prétraitement (TF-IDF, LabelEncoder)
+[web:21][web:22][web:26][web:82]
+    """)
+
+    st.markdown("""
+### 🔮 Tracking côté prédiction (`predict.py`)
+
+- L'API de prédiction interroge MLflow pour récupérer le **meilleur run** de l'expérience (trié par accuracy)
+- Chargement du modèle (`runs:/<run_id>/xgb_model`) et des artefacts associés depuis le store d'artefacts (MinIO)
+- L'endpoint de prédiction sert toujours le modèle le plus performant enregistré dans MLflow
+[web:35][web:40][web:45][web:90]
+    """)
+
+    st.markdown("""
+### 🌐 Intégration avec l'API
+
+- Endpoint `/train` → déclenche `train()` et crée un nouveau run MLflow
+- Endpoint `/predict` → appelle `predict()`, recharge le meilleur modèle depuis MLflow et renvoie une prédiction JSON
+- Séparation claire entre **tracking des expériences** (MLflow) et **serving** (API + Streamlit)
+[web:59][web:62][web:71][web:83]
+    """)
+
 
 # =====================================================
 # 6. AIRFLOW + DRIFT
@@ -464,6 +504,89 @@ GitHub Actions :
 - Tests unitaires
 - Build & Push Docker
 - Déploiement automatique
+                
+Le pipeline est divisé en deux flux distincts : une chaîne d'intégration pour valider la qualité du code (ci.yml) et une chaîne de déploiement pour la mise en production (cd.yml).
+1. Intégration Continue (CI)
+
+Le workflow CI est déclenché automatiquement à chaque push ou pull request sur la branche master. Son objectif est de garantir la qualité du code Python avant toute fusion ou déploiement.
+Étapes clés du pipeline :
+
+    Environnement : Exécution sur une machine virtuelle Ubuntu avec Python 3.11.
+
+​
+
+Gestion des dépendances : Utilisation de uv (un gestionnaire de paquets ultra-rapide) pour créer l'environnement virtuel et installer les dépendances du projet.
+
+​
+
+Qualité du code (Linting & Formatting) :
+
+    Le code est analysé et vérifié par ruff (remplaçant moderne de outils comme Flake8 ou Black).
+
+    Le pipeline échoue si le code ne respecte pas les normes de formatage définies.
+
+    ​
+
+Tests automatisés :
+
+    Lancement des tests unitaires via pytest.
+
+    Le script vérifie intelligemment la présence de fichiers de test avant de lancer la commande pour éviter les erreurs inutiles.
+
+Rapport de couverture : Upload automatique des rapports de couverture de code vers Codecov si les tests réussissent.
+
+    ​
+
+2. Déploiement Continu (CD)
+
+Le workflow CD est orchestré pour se lancer uniquement après la réussite du workflow CI. Il gère la construction des images Docker et leur déploiement sur un serveur distant (infrastructure Oracle Cloud).
+Construction des Images (Build & Push)
+
+Ce job prépare les conteneurs pour la production. Pour optimiser l'espace disque, les services sont construits séquentiellement avec un nettoyage systématique entre chaque étape.
+
+​
+
+    Registre de conteneurs : Les images sont stockées sur le GitHub Container Registry (GHCR).
+
+    Services construits :
+
+        Le pipeline construit et pousse actuellement les images pour : API (FastAPI), Airflow, MLflow, MongoDB, et Prometheus.
+
+​
+
+Note importante : Les services Streamlit (Frontend), Trainer, et Predictor sont actuellement commentés dans le fichier cd.yml et ne sont donc pas construits automatiquement pour le moment.
+
+        ​
+
+Déploiement (Deploy SSH)
+
+Une fois les images construites, le déploiement s'effectue via SSH sur le serveur cible.
+
+    Transfert de configuration : Copie des fichiers docker-compose*.yml vers le serveur via SCP.
+
+​
+
+Mise à jour des services :
+
+    Connexion au registre GHCR depuis le serveur.
+
+    Téléchargement des nouvelles images (docker compose pull).
+
+    Redémarrage des conteneurs en tâche de fond (docker compose up -d).
+
+    Nettoyage des anciennes images inutilisées pour libérer de l'espace (docker image prune).
+
+        ​
+
+| Composant               | Outils / Technologies               |
+| ----------------------- | ----------------------------------- |
+| Gestionnaire de paquets | uv (Performance)                    |
+| Linter / Formatter      | ruff                                |
+| Tests                   | pytest + Codecov                    |
+| Conteneurisation        | Docker + Docker Buildx (Multi-arch) |
+| Registre d'images       | GitHub Container Registry (ghcr.io) |
+| Déploiement             | SSH + Docker Compose                |
+                
 """)
 
 # =====================================================
@@ -472,7 +595,6 @@ GitHub Actions :
 
 
 elif page == "9. Conclusion & Opportunités futures":
-
     st.title("🏁 Conclusion & Opportunités futures")
 
     st.markdown("""
