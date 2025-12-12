@@ -211,7 +211,7 @@ GitHub Actions :
 - Tests unitaires
 - Build & Push Docker
 - Déploiement automatique
-                
+
 Le pipeline est divisé en deux flux distincts : une chaîne d'intégration pour valider la qualité du code (ci.yml) et une chaîne de déploiement pour la mise en production (cd.yml).
 1. Intégration Continue (CI)
 
@@ -220,19 +220,13 @@ Le workflow CI est déclenché automatiquement à chaque push ou pull request su
 
     Environnement : Exécution sur une machine virtuelle Ubuntu avec Python 3.11.
 
-​
-
 Gestion des dépendances : Utilisation de uv (un gestionnaire de paquets ultra-rapide) pour créer l'environnement virtuel et installer les dépendances du projet.
-
-​
 
 Qualité du code (Linting & Formatting) :
 
     Le code est analysé et vérifié par ruff (remplaçant moderne de outils comme Flake8 ou Black).
 
     Le pipeline échoue si le code ne respecte pas les normes de formatage définies.
-
-    ​
 
 Tests automatisés :
 
@@ -242,7 +236,6 @@ Tests automatisés :
 
 Rapport de couverture : Upload automatique des rapports de couverture de code vers Codecov si les tests réussissent.
 
-    ​
 
 2. Déploiement Continu (CD)
 
@@ -251,7 +244,6 @@ Construction des Images (Build & Push)
 
 Ce job prépare les conteneurs pour la production. Pour optimiser l'espace disque, les services sont construits séquentiellement avec un nettoyage systématique entre chaque étape.
 
-​
 
     Registre de conteneurs : Les images sont stockées sur le GitHub Container Registry (GHCR).
 
@@ -259,19 +251,14 @@ Ce job prépare les conteneurs pour la production. Pour optimiser l'espace disqu
 
         Le pipeline construit et pousse actuellement les images pour : API (FastAPI), Airflow, MLflow, MongoDB, et Prometheus.
 
-​
 
 Note importante : Les services Streamlit (Frontend), Trainer, et Predictor sont actuellement commentés dans le fichier cd.yml et ne sont donc pas construits automatiquement pour le moment.
-
-        ​
 
 Déploiement (Deploy SSH)
 
 Une fois les images construites, le déploiement s'effectue via SSH sur le serveur cible.
 
     Transfert de configuration : Copie des fichiers docker-compose*.yml vers le serveur via SCP.
-
-​
 
 Mise à jour des services :
 
@@ -283,8 +270,6 @@ Mise à jour des services :
 
     Nettoyage des anciennes images inutilisées pour libérer de l'espace (docker image prune).
 
-        ​
-
 | Composant               | Outils / Technologies               |
 | ----------------------- | ----------------------------------- |
 | Gestionnaire de paquets | uv (Performance)                    |
@@ -293,7 +278,7 @@ Mise à jour des services :
 | Conteneurisation        | Docker + Docker Buildx (Multi-arch) |
 | Registre d'images       | GitHub Container Registry (ghcr.io) |
 | Déploiement             | SSH + Docker Compose                |
-                
+
 """)
 
 # =====================================================
