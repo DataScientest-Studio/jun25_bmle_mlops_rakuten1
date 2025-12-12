@@ -21,18 +21,28 @@ class rakuten_train_api:
 
         self.router = APIRouter()
         self.router.add_api_route("/", self.verify, methods=["POST"])
+        # Ajout de la route Health (GET)
+        self.router.add_api_route("/health", self.health_check, methods=["GET"])
         self.router.add_api_route("/login", login_method.login, methods=["POST"])
         self.router.add_api_route("/train", self.train, methods=["POST"])
 
     def verify(self):
-        return JSONResponse(status_code=200, content={"detail": "L'API est bien fonctionnelle."})
+        return JSONResponse(
+            status_code=200, content={"detail": "L'API est bien fonctionnelle."}
+        )
+
+    def health_check(self):
+        """Healthcheck pour Docker/K8s (GET)"""
+        return JSONResponse(status_code=200, content={"status": "ok"})
 
     def train(self, request: Request):
         try:
             login_method = login_api()
             auth = request.headers.get("Authorization")
             if not auth or (auth and not auth.startswith("Bearer")):
-                raise HTTPException(status_code=400, detail="Aucune authentification envoyé")
+                raise HTTPException(
+                    status_code=400, detail="Aucune authentification envoyé"
+                )
 
             credentials = auth.split("Bearer ")[1]
             token = credentials.strip()
@@ -42,12 +52,17 @@ class rakuten_train_api:
                 login_method.verify_jwt_token(token)
                 result = train()
                 return JSONResponse(
-                    status_code=200, content={"detail": "La connexion a réussi", "data": result}
+                    status_code=200,
+                    content={"detail": "La connexion a réussi", "data": result},
                 )
             else:
-                return JSONResponse(status_code=400, content={"detail": "L'entrainement a échoué"})
+                return JSONResponse(
+                    status_code=400, content={"detail": "L'entrainement a échoué"}
+                )
         except ValueError:
-            raise HTTPException(status_code=400, detail="L'entrainement a échoué") from None
+            raise HTTPException(
+                status_code=400, detail="L'entrainement a échoué"
+            ) from None
 
 
 entrainement = FastAPI(title="Rakuten")
