@@ -24,7 +24,7 @@ page = st.sidebar.radio(
         "7. Monitoring : Grafana / Prometheus",
         "8. CI/CD : GitHub Actions",
         "9. Conclusion & Opportunités futures",
-    ]
+    ],
 )
 
 # =====================================================
@@ -32,7 +32,6 @@ page = st.sidebar.radio(
 # =====================================================
 
 if page == "Démo : prédiction Rakuten":
-
     st.title("Démo : prédiction Rakuten")
 
     # ---------- LOGIN ----------
@@ -158,13 +157,53 @@ FastAPI expose :
 
 elif page == "5. Model Tracking : MLflow":
     st.title("Model Tracking : MLflow")
+
     st.markdown("""
-MLflow utilisé pour :
-- Tracking des runs
-- Paramètres / hyperparamètres
-- Métriques
-- Artefacts (modèles, encoders)
-""")
+### 🎯 Rôle de MLflow dans le projet
+
+MLflow est utilisé comme **serveur central de suivi des expériences** :
+- Suivi des runs d'entraînement (un run = une exécution du script `train.py`)
+- Journalisation des **paramètres / hyperparamètres** du modèle XGBoost
+- Suivi des **métriques** (accuracy, F1, etc.)
+- Stockage des **artefacts** : modèle, TF-IDF, LabelEncoder, logs...
+[web:35][web:81][web:86]
+    """)
+
+    st.markdown("""
+### 🏗️ Infrastructure MLflow (Docker + MinIO)
+
+- Service **MLflow** dans un conteneur dédié (port 5000) avec backend SQLite pour les métadonnées des runs
+- Service **MinIO (S3)** pour stocker les artefacts dans le bucket `mlflow-artifacts`
+- Variables d'environnement (`MLFLOW_HOST`, `MLFLOW_S3_ENDPOINT_URL`, clés MinIO) pour connecter les scripts au tracking server
+[web:1][web:10][web:16][web:89]
+    """)
+
+    st.markdown("""
+### 🧪 Tracking côté entraînement (`train.py`)
+
+- Le script `train()` initialise l'expérience `rakuten_xgb_fusion` et démarre un **run MLflow**
+- Log des hyperparamètres XGBoost (profondeur, learning rate, device CPU/GPU...)
+- Log des métriques de validation (accuracy, F1) et du modèle XGBoost + artefacts de prétraitement (TF-IDF, LabelEncoder)
+[web:21][web:22][web:26][web:82]
+    """)
+
+    st.markdown("""
+### 🔮 Tracking côté prédiction (`predict.py`)
+
+- L'API de prédiction interroge MLflow pour récupérer le **meilleur run** de l'expérience (trié par accuracy)
+- Chargement du modèle (`runs:/<run_id>/xgb_model`) et des artefacts associés depuis le store d'artefacts (MinIO)
+- L'endpoint de prédiction sert toujours le modèle le plus performant enregistré dans MLflow
+[web:35][web:40][web:45][web:90]
+    """)
+
+    st.markdown("""
+### 🌐 Intégration avec l'API
+
+- Endpoint `/train` → déclenche `train()` et crée un nouveau run MLflow
+- Endpoint `/predict` → appelle `predict()`, recharge le meilleur modèle depuis MLflow et renvoie une prédiction JSON
+- Séparation claire entre **tracking des expériences** (MLflow) et **serving** (API + Streamlit)
+[web:59][web:62][web:71][web:83]
+    """)
 
 # =====================================================
 # 6. AIRFLOW + DRIFT
