@@ -73,27 +73,24 @@ jobs:
       # 1. Construire l'image depuis le dossier tests
       # -f indique le chemin du fichier, le point final (.) indique le contexte racine
       - name: Build Docker image from tests folder
-        run: docker build -f tests/Dockerfile -t test_api_image .
+        run: docker build -f tests/api/Dockerfile -t test_api_image .
 
-      # 2. Lancer le conteneur avec un nom préfixé (test_...)
+       # 2. Lancer le conteneur
       - name: Run Test API container
         run: |
           docker run -d --name test_api_container \
-            -p 8000:8000 \
             -p 8080:8080 \
-            -e PORT_TRAIN=8000 \
-            -e PORT_PREDICT=8080 \
             test_api_image
 
-      # 3. Attendre que l'API soit prête (Healthcheck sur /hello ou /)
+      # 3. Attendre que l'API soit prête (Healthcheck sur /health sur port 8080)
       - name: Wait for API to be ready
         run: |
           echo "Waiting for API to be ready..."
-          # On tente pendant 120s. Si ça échoue, on continue pour afficher les logs juste après
-          timeout 120s bash -c 'until curl --silent --fail http://localhost:8000/ > /dev/null; do sleep 2; done' || true
+          # On tape sur 8080/health
+          timeout 120s bash -c 'until curl --silent --fail http://localhost:8080/health > /dev/null; do sleep 2; done' || true
           
-          # Vérification finale et affichage des logs en cas d'erreur
-          if ! curl --silent --fail http://localhost:8000/ > /dev/null; then
+          # Vérification finale et logs
+          if ! curl --silent --fail http://localhost:8080/health > /dev/null; then
             echo "❌ API failed to start within timeout."
             echo "=== CONTAINER LOGS ==="
             docker logs test_api_container
@@ -101,6 +98,7 @@ jobs:
             exit 1
           fi
           echo "✅ API is ready!"
+
 
 
       - name: Test with pytest
