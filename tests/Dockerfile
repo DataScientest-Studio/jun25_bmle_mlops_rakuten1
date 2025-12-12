@@ -30,7 +30,7 @@ RUN uv pip install --system --no-cache \
     --extra api \
     --extra database \
     --extra etl \
-    --extra dev \
+    --extra dev
 
 # 3. Copie du code source
 COPY src/ /app/src/
