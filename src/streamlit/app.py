@@ -508,18 +508,67 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 # =====================================================
 
 elif page == "6. Automatisation : Airflow - drift / Evidently":
-    st.title("Automatisation : Airflow - drift / Evidently")
-    st.markdown("""
-Airflow orchestre :
-- Préprocessing
-- Fusion
-- Entraînement automatique
-- Publication du modèle
+    st.title("🌀 Automatisation : Airflow")
 
-Evidently pour :
-- Détection de dérive
-- Monitoring statistique
-""")
+    st.markdown("""
+### 🏗️ Infrastructure Airflow (Docker)
+
+Airflow est déployé dans un cluster Docker avec :
+- Une base **PostgreSQL** pour la métabase Airflow.
+- Un broker **Redis** pour Celery.
+- Trois services Airflow : **webserver**, **scheduler** et **worker**, tous en **CeleryExecutor**.
+- Un conteneur **airflow-init** pour initialiser la base et créer l'utilisateur web.
+    """)
+
+    st.markdown("""
+### 📡 DAG de monitoring de dérive (Evidently)
+
+**DAG : `rakuten_data_drift_monitoring` (tous les jours à 8h)**
+
+- Charge un échantillon **référence** et **courant** du fichier `X_train_update.csv` en fonction des dates.
+- Nettoie uniquement le texte (`designation`, `description`) puis construit `title_clean` et `description_clean`.
+- Utilise Evidently pour calculer :
+  - `DatasetDriftMetric` sur l'ensemble du dataset.
+  - `ColumnDriftMetric` sur `title_clean` et `description_clean` (avec un seuil de test statistique).
+  - `TextDescriptorsDriftMetric` sur les deux colonnes texte.
+
+Le DAG :
+- Sauvegarde un **rapport HTML** de dérive dans `/app/reports/evidently_reports/`.
+- Combine les flags de drift pour décider s'il y a un **drift global**.
+- Utilise un `BranchPythonOperator` pour choisir entre :
+  - déclencher le DAG d'entraînement (`trigger_rakuten_weekly_training`),
+  - ou ne rien faire (`no_trigger`).
+[web:131][web:132][web:138][web:148]
+    """)
+
+    st.markdown("""
+### 🔁 DAG d'entraînement hebdomadaire
+
+**DAG : `rakuten_weekly_training` (tous les lundis à 4h)**
+
+- Tâche `get_token_task` :
+  - Appelle l'endpoint `/login` du service **trainer** (FastAPI) pour récupérer un jeton d'authentification.
+- Tâche `call_api_task` :
+  - Appelle l'endpoint `/train` du service **trainer` avec ce jeton.
+  - Déclenche l'entraînement du modèle Rakuten dans le conteneur `trainer` (qui logue ensuite le run dans MLflow).
+
+Ce DAG peut être lancé :
+- automatiquement chaque semaine par le scheduler,
+- ou **à la demande** par le DAG de dérive lorsqu'un drift est détecté.
+[web:94][web:129][web:111]
+    """)
+
+    st.markdown("""
+### 🧠 Rôle d'Airflow dans la pipeline
+
+Airflow joue le rôle de **chef d'orchestre** de la pipeline MLOps :
+- Surveille la **dérive des données texte** au quotidien avec Evidently.
+- **Automatise** le déclenchement de l'entraînement via l'API `trainer`.
+- Centralise la **traçabilité** des exécutions (états des DAGs, logs, durées) dans l'UI Airflow.
+
+Il relie ainsi la partie **données** (drift) et la partie **modèle** (ré-entraînement + tracking MLflow) dans un même outil d'orchestration.
+[web:103][web:111][web:112]
+    """)
 
 # =====================================================
 # 7. MONITORING
