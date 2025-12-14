@@ -1,7 +1,14 @@
 import streamlit as st
 import requests
+import os
+import pandas as pd
+import base64
+import io
+from PIL import Image
 
 API_URL = "http://rakuten_predictor:8080"
+RAW_DIR = os.path.join("data", "raw")
+IMG_DIR = os.path.join(RAW_DIR, "images", "images")
 
 st.set_page_config(layout="wide")
 
@@ -14,7 +21,6 @@ st.sidebar.title("Navigation du projet")
 page = st.sidebar.radio(
     "Aller à :",
     [
-        "Démo : prédiction Rakuten",
         "1. Intro : contexte & objectifs",
         "2. Architecture globale / Dockerisation / Environnement développement",
         "3. Pipelines : train & predict + DB",
@@ -24,66 +30,16 @@ page = st.sidebar.radio(
         "7. Monitoring : Grafana / Prometheus",
         "8. CI/CD : GitHub Actions",
         "9. Conclusion & Opportunités futures",
+        "Démo : prédiction Rakuten",
     ],
 )
-
-# =====================================================
-#                 PAGE : DEMO PREDICTION
-# =====================================================
-
-if page == "Démo : prédiction Rakuten":
-    st.title("Démo : prédiction Rakuten")
-
-    # ---------- LOGIN ----------
-    st.header("Authentification")
-
-    user = st.text_input("User", "user")
-    password = st.text_input("Password", "rakuten_project", type="password")
-
-    if st.button("Obtenir un jeton"):
-        headers = {"Authorization": f"Bearer {user}:{password}"}
-        resp = requests.post(f"{API_URL}/login", headers=headers)
-
-        if resp.status_code == 200:
-            st.session_state["token"] = resp.json()["token"]
-            st.success("Jeton reçu")
-        else:
-            st.error(f"Erreur login : {resp.text}")
-
-    # ---------- PREDICTION ----------
-    st.header("Prédiction d'un produit aléatoire")
-
-    if "token" in st.session_state:
-        if st.button("Prédire un produit"):
-            headers = {"Authorization": f"Bearer {st.session_state['token']}"}
-            resp = requests.post(f"{API_URL}/predict", headers=headers)
-
-            if resp.status_code == 200:
-                data = resp.json()["data"]
-
-                st.subheader("Catégorie prédite")
-                st.write(data.get("category"))
-
-                st.subheader("Code prédict")
-                st.write(data.get("predicted_code"))
-
-                st.subheader("Désignation")
-                st.write(data.get("designation"))
-
-                st.subheader("Description")
-                st.write(data.get("description"))
-            else:
-                st.error(f"Erreur predict : {resp.text}")
-
-    else:
-        st.info("Veuillez d'abord obtenir un jeton.")
 
 # =====================================================
 # 1. INTRO MARC
 # =====================================================
 
 
-elif page == "1. Intro : contexte & objectifs":
+if page == "1. Intro : contexte & objectifs":
     st.title("🎯 Introduction : Contexte & Objectifs du Projet")
 
     st.markdown("""
@@ -692,7 +648,6 @@ Mise à jour des services :
 # 9. CONCLUSION MARC
 # =====================================================
 
-
 elif page == "9. Conclusion & Opportunités futures":
     st.title("🏁 Conclusion & Opportunités futures")
 
@@ -785,3 +740,127 @@ Le système fonctionne, le pipeline est cohérent, et surtout…
 Un projet riche, formateur, et qui ouvre naturellement la porte à des déploiements plus ambitieux.
 
 """)
+
+# =====================================================
+#                 PAGE : DEMO PREDICTION
+# =====================================================
+
+elif page == "Démo : prédiction Rakuten":
+    st.title("Démo : prédiction Rakuten")
+
+    # ---------- LOGIN ----------
+    st.header("Authentification")
+
+    user = st.text_input("User", "user")
+    password = st.text_input("Password", "rakuten_project", type="password")
+
+    if st.button("Obtenir un jeton"):
+        headers = {"Authorization": f"Bearer {user}:{password}"}
+        resp = requests.post(f"{API_URL}/login", headers=headers)
+
+        if resp.status_code == 200:
+            st.session_state["token"] = resp.json()["token"]
+            st.success("Jeton reçu")
+        else:
+            st.error(f"Erreur login : {resp.text}")
+
+    # ---------- PREDICTION ----------
+    st.header("Sélection d'un produit")
+
+    if "token" in st.session_state:
+        csv_path = os.path.join(RAW_DIR, "X_test_update.csv")
+        df_full = pd.read_csv(
+            csv_path
+        )  # Charger un échantillon de 5 lignes une seule fois
+        # Bouton pour recharger 5 lignes aléatoires
+        if st.button("🔄 Recharger 5 produits au hasard"):
+            st.session_state["rakuten_sample"] = df_full.sample(n=5).reset_index(
+                drop=True
+            )
+
+        # Si pas encore d'échantillon, en générer un
+        if "rakuten_sample" not in st.session_state:
+            st.session_state["rakuten_sample"] = df_full.sample(n=5).reset_index(
+                drop=True
+            )
+
+        df_sample = st.session_state["rakuten_sample"]
+
+        st.markdown("Clique sur une ligne dans le tableau pour la sélectionner :")
+
+        # Tableau cliquable
+        event = st.dataframe(
+            df_sample[["designation", "description"]],
+            use_container_width=True,
+            hide_index=True,
+            on_select="rerun",
+            selection_mode="single-row",
+        )
+
+        selected_row = None
+        if hasattr(event, "selection") and event.selection and event.selection.rows:
+            pos = event.selection.rows[0]  # position dans df_sample
+            selected_row = df_sample.iloc[pos]
+
+        if selected_row is not None:
+            # Construction du chemin d'image
+            image_filename = (
+                "image_"
+                + str(selected_row["imageid"])
+                + "_product_"
+                + str(selected_row["productid"])
+                + ".jpg"
+            )
+            image_path = os.path.join(IMG_DIR, "image_test", image_filename)
+
+            col1, col2 = st.columns(2)
+
+            img = None
+            with col1:
+                st.subheader("Image du produit")
+                if os.path.exists(image_path):
+                    img = Image.open(image_path)
+                    st.image(img, width=300)
+                else:
+                    st.write("Image introuvable.")
+
+            with col2:
+                st.subheader("Texte du produit")
+                st.markdown("**Désignation :**")
+                st.write(selected_row["designation"])
+                st.markdown("**Description :**")
+                st.write(selected_row["description"])
+
+            if st.button("🚀 Lancer la prédiction sur ce produit"):
+                if img is None:
+                    st.error("Impossible de prédire : image introuvable.")
+                else:
+                    # encodage image en base64
+                    buf = io.BytesIO()
+                    img.save(buf, format="JPEG")
+                    img_b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
+
+                    headers = {"Authorization": f"Bearer {st.session_state['token']}"}
+                    payload = {
+                        "designation": str(selected_row["designation"] or ""),
+                        "description": str(selected_row["description"] or ""),
+                        "image_base64": img_b64,
+                    }
+                    resp = requests.post(
+                        f"{API_URL}/predict", headers=headers, json=payload
+                    )
+
+                    if resp.status_code == 200:
+                        data = resp.json()["data"]
+
+                        st.subheader("Résultat de la prédiction")
+                        st.markdown(f"**Catégorie prédite :** {data.get('category')}")
+                        st.markdown(f"**Code prédit :** {data.get('predicted_code')}")
+                    else:
+                        st.error(f"Erreur predict : {resp.text}")
+        else:
+            st.info(
+                "Sélectionne une ligne dans le tableau pour afficher l'image et lancer une prédiction."
+            )
+    else:
+        st.info("Veuillez d'abord obtenir un jeton.")

@@ -3,17 +3,26 @@ import numpy as np
 import jwt
 from fastapi import APIRouter, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
+from fastapi import Body
 from prometheus_fastapi_instrumentator import Instrumentator
 import pandas as pd
 from PIL import Image
 import os
+import io
+from pydantic import BaseModel
 
 from src.predict.predict import predict
 from src.api.login import login_api
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
-IMG_DIR = os.path.join(RAW_DIR, "images", "images")
+# BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+# RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
+# IMG_DIR = os.path.join(RAW_DIR, "images", "images")
+
+
+class PredictRequest(BaseModel):
+    designation: str
+    description: str
+    image_base64: str
 
 
 class rakuten_predict_api:
@@ -42,7 +51,7 @@ class rakuten_predict_api:
         """Healthcheck pour Docker/K8s (GET)"""
         return JSONResponse(status_code=200, content={"status": "ok"})
 
-    def prediction(self, request: Request):
+    def prediction(self, request: Request, body: PredictRequest):
         try:
             login_method = login_api()
             auth = request.headers.get("Authorization")
@@ -54,7 +63,7 @@ class rakuten_predict_api:
             credentials = auth.split("Bearer ")[1]
             token = credentials.strip()
 
-            # Gestion basique du décodage si le client a encodé en base64 (cas rare mais présent dans votre code)
+            # Gestion basique du décodage si le client a encodé en base64
             if not token.startswith("ey"):
                 try:
                     token = base64.b64decode(token).decode("utf-8")
@@ -64,58 +73,25 @@ class rakuten_predict_api:
             if token:
                 login_method.verify_jwt_token(token)
                 # Lecture CSV
-                csv_path = os.path.join(RAW_DIR, "X_test_update.csv")
-                if not os.path.exists(csv_path):
-                    return JSONResponse(
-                        status_code=500,
-                        content={"detail": f"CSV introuvable: {csv_path}"},
-                    )
+                # ---- décodage de l'image ----
+                img_bytes = base64.b64decode(body.image_base64)
+                img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
 
-                X_test = pd.read_csv(csv_path)
-
-                if X_test.empty:
-                    return JSONResponse(status_code=500, content={"detail": "CSV vide"})
-
-                row = X_test.sample(n=1)
-
-                image_filename = (
-                    "image_"
-                    + str(row["imageid"].values[0])
-                    + "_product_"
-                    + str(row["productid"].values[0])
-                    + ".jpg"
+                # ---- appel de la fonction predict ----
+                result = predict(
+                    body.designation or "",
+                    body.description or "",
+                    img,
                 )
-                image_path = os.path.join(IMG_DIR, "image_test", image_filename)
 
-                if os.path.exists(image_path):
-                    img = Image.open(image_path)
-                    result = predict(
-                        str(row["designation"].values[0]),
-                        str(row["description"].values[0]),
-                        img,
-                    )
+                # enrichir avec les textes reçus (pour traçabilité)
+                result["designation"] = body.designation or ""
+                result["description"] = body.description or ""
 
-                    # Nettoyage NaN pour JSON
-                    result["designation"] = (
-                        ""
-                        if pd.isna(row["designation"].values[0])
-                        else row["designation"].values[0]
-                    )
-                    result["description"] = (
-                        ""
-                        if pd.isna(row["description"].values[0])
-                        else row["description"].values[0]
-                    )
-
-                    return JSONResponse(
-                        status_code=200,
-                        content={"detail": "La connexion a réussi", "data": result},
-                    )
-                else:
-                    return JSONResponse(
-                        status_code=400,
-                        content={"detail": "Aucun résultat (Image introuvable)"},
-                    )
+                return JSONResponse(
+                    status_code=200,
+                    content={"detail": "Prédiction OK", "data": result},
+                )
             else:
                 return JSONResponse(
                     status_code=400,
