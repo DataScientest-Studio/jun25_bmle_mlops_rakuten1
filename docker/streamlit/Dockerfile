@@ -8,7 +8,7 @@ ENV PYTHONUNBUFFERED=1 \
 WORKDIR /app
 
 # Install Streamlit + requests
-RUN pip install --no-cache-dir streamlit requests
+RUN pip install --no-cache-dir streamlit requests pandas
 
 # Copy your streamlit app folder
 COPY src/streamlit/ /app/
