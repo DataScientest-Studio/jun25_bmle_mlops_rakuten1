@@ -5,7 +5,7 @@ This project is a starting Pack for MLOps projects based on the subject "movie_r
 
 Project Organization
 ------------
-
+```
     ├── LICENSE
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
@@ -47,8 +47,8 @@ Project Organization
     │   ├── visualization  <- Scripts to create exploratory and results oriented visualizations
     │   │   └── visualize.py
     │   └── config         <- Describe the parameters used in train_model.py and predict_model.py
+```
 
---------
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
 
@@ -66,8 +66,8 @@ Project Organization
 - Sébastien - [sebastien@example.com](mailto:sebastien@example.com)
 
 **Liens du Projet :**
-- 📊 [Trello - Gestion du projet](https://trello.com/votre-board)
-- 💻 [GitHub - Dépôt Git](https://github.com/votre-repo)
+- 📊 [Trello - Gestion du projet](https://trello.com/JUN25_BMLE_MLOPS_RAKUTEN1)
+- 💻 [GitHub - Dépôt Git](https://github.com/datascientest/JUN25_BMLE_MLOPS_RAKUTEN1)
 
 ---
 
@@ -139,14 +139,14 @@ Project Organization
 ---
 
 ## 📅 Roadmap
-'''
+```
 05 Nov              12 Nov              19 Nov              29 Nov              10 Déc              17 Déc
 |==================|===================|===================|===================|===================|
 └─ Phase 1 ────────┘└─ Phase 2 ────────┘└─ Phase 3 ────────┘└─ Phase 4 ────────┘└─ Phase 5 ────────┘
 |Fondations         │Microservices      │Orchestration      │Monitoring         │Frontend
 |                   |Suivi & Versionning│Déploiement        │Maintenance        │
 |                   |                   │                   │(OPTIONNEL)        │
-'''
+```
 
 ### Planning détaillé
 

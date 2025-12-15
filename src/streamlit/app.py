@@ -182,21 +182,95 @@ recommandation, catégorisation automatique, qualité du catalogue, recherche in
 # 2. ARCHITECTURE / DOCKER / ENV DE DEV SEBASTIEN
 # =====================================================
 
-elif page == "2. Architecture globale / Dockerisation / Environnement développement":
-    st.title("Architecture globale / Dockerisation / Environnement développement")
+elif page == "2. Architecture du projet":
+    st.title("Architecture du projet")
     st.markdown("""
-Architecture globale du projet :
-- FastAPI pour la prédiction
-- Streamlit pour l'interface utilisateur
-- MongoDB pour stocker les données brutes
-- Jobs de preprocessing et entraînement
-- MLflow pour le suivi des modèles
-- Airflow pour l'automatisation
-- Monitoring système + API
+## 📂 Structure du Projet
+```
+    ├── .dockerignore      <- ignore for docker
+    ├── .gitignore         <- ignore for git
+    ├── .python-version    <- python version for uv
+    ├── docker-compose-*.yml <- docker-compose for each components of the rakuten app (airflow, mongo, prometheus-grafana, etc.)
+    ├── docker-compose.yml <- main docker-compose for rakuten app
+    ├── LICENSE
+    ├── Makefile           <- centralize command for docker components
+    ├── pyproject.toml     <- The requirements file for reproducing the analysis environment
+    ├── README.md          <- The top-level README for developers using this project.
+    ├── uv.lock            <- UV file freezing dependances environnement
+    ├── .github/workflows
+    │   ├── ci.yml         <- Continuons Integration File for GitHub Actions
+    │   └── cd.yml         <- Continuons Deployment File for GitHub Actions
+    ├── conf               <- configuration files (mongo, prometheus, etc.)
+    ├── data
+    │   └── raw            <- The original, immutable data dump.
+    ├── docker             <- Dockerfiles (api, airflow, mongo, etc.)
+    ├── logs               <- Logs from app
+    ├── models             <- Model save
+    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+    │   └── evidently      <- Generated evidently reports
+    ├── ressources         <- files for md files (images, graph, etc.)
+    ├── src                <- Source code for use in this project.
+    └── tests              <- tests files for CI
+```
 
-Environnement :
-- Développement via containers Docker
-- Réseau interne Docker Compose
+## 🛠️ Environnement de développement  
+
+Gestion des dépendances Python avec `uv` et un fichier `pyproject.toml`, en utilisant des *extras* pour cibler finement les dépendances nécessaires à chaque conteneur Docker (API, training, Airflow, etc.).
+
+Gestion de code source avec `git`, qualité de code assurée avec `ruff` pour le linting, le formatage et le respect des conventions PEP.
+
+Utilisation de Docker pour développer et tester en local dans des conteneurs isolés, reliés via un réseau interne Docker Compose, ce qui rapproche fortement l’environnement de développement de l’environnement de déploiement.
+
+
+## 🤖 Application métier ML/DL Rakuten
+
+### Données et preprocessing
+
+Les données brutes sont constituées d’un fichier CSV (descriptions texte + labels) et d’images stockées dans des sous-répertoires dédiés sous `/data/raw`.
+
+Un job de preprocessing charge chaque jour une fraction du CSV (par exemple 1 000 lignes) et les images associées, nettoie et normalise le texte (TF‑IDF) ainsi que les images (features ResNet50), puis stocke les données prétraitées dans MongoDB.
+
+
+### Entraînement
+
+L’entraînement s’appuie exclusivement sur ces données propres (features texte + image) pour entraîner les modèles de classification de produits (ML/DL), avec suivi complet des expériences via MLflow.
+
+MLflow enregistre les paramètres, métriques et artefacts des modèles, en s’appuyant sur PostgreSQL pour la métadonnée et MinIO comme stockage d’artefacts, ce qui permet d’identifier et de conserver automatiquement le meilleur modèle.
+
+
+### Prédiction
+
+La phase de prédiction sélectionne aléatoirement un exemple dans les données de test (texte + image) et récupère à la volée le meilleur modèle disponible auprès de MLflow pour produire une prédiction de catégorie.
+
+L’API FastAPI expose des endpoints dédiés (`/train`, `/predict`) qui appellent respectivement les pipelines d’entraînement et de prédiction, ainsi qu’un endpoint `/login` qui gère l’authentification et délivre un token JWT exigé pour sécuriser les appels de train/predict.
+
+
+## ⚙️ Outillage MLOps
+
+### Orchestration des tâches
+
+Airflow orchestre les jobs de preprocessing et d’entraînement quotidien, ainsi qu’un rapport de dérive via Evidently.
+Si la dérive dépasse un seuil de 0,5, un réentraînement automatique est déclenché sur les dernières données propres.
+
+
+### Monitoring et observabilité  
+
+Prometheus collecte les métriques système (CPU, mémoire) et API, tandis que Grafana propose des dashboards dédiés pour visualiser l’état de la plateforme et la santé de l’API.
+
+
+### Conteneurisation
+
+Tous les composants (API FastAPI, jobs preprocessing/train/predict, MongoDB, MLflow, MinIO, PostgreSQL, Airflow, Prometheus, Grafana, Evidently) sont déployés dans des conteneurs Docker interconnectés, avec un volume monté pour `/data` et des volumes Docker spécifiques à chaque outil.
+
+
+### Soutenance du projet
+
+Streamlit sert d’interface utilisateur pour présenter le projet et permettre des tests en direct :
+* L’application propose une sélection aléatoire de 5 couples texte/image issus du jeu de test.
+* Elle interroge l’API de prédiction pour afficher la catégorie estimée et les informations associées.
+
+
+Le pipeline est divisé en deux flux distincts : une chaîne d’intégration pour valider la qualité du code (`ci.yml`) et une chaîne de déploiement pour la mise en production (`cd.yml`).
 """)
 
 # =====================================================
@@ -555,88 +629,68 @@ L’interface propose également des sections regroupant les métriques avancée
 elif page == "8. CI/CD : GitHub Actions":
     st.title("CI/CD : GitHub Actions")
     st.markdown("""
-Le pipeline est divisé en deux flux distincts : une chaîne d'intégration pour valider la qualité du code (ci.yml) et une chaîne de déploiement pour la mise en production (cd.yml).
-1. Intégration Continue (CI)
+## ✅ Intégration Continue (CI)
 
-Le workflow CI est déclenché automatiquement à chaque push ou pull request sur la branche master. Son objectif est de garantir la qualité du code Python avant toute fusion ou déploiement.
-Étapes clés du pipeline :
+Le workflow CI est déclenché automatiquement à chaque `push` ou `pull request` sur la branche `master`.
+Son objectif est de garantir la qualité du code Python avant toute fusion ou déploiement et l’exécution d’une couverture de tests pour garantir l’absence de régression.
 
-    Environnement : Exécution sur une machine virtuelle Ubuntu avec Python 3.11.
 
-​
+### Étapes clés du pipeline d’exécution de la CI
 
-Gestion des dépendances : Utilisation de uv (un gestionnaire de paquets ultra-rapide) pour créer l'environnement virtuel et installer les dépendances du projet.
+* Environnement : Exécution sur une machine virtuelle Ubuntu avec Python 3.11.
+* Gestion des dépendances : Utilisation de `uv` (un gestionnaire d’environnement virtuel et de paquets ultra-rapide).
+* Qualité du code (Linting & Formatting) :
+  > Le code est analysé et vérifié par `ruff` (remplaçant moderne d’outils comme Flake8 ou Black).
 
-​
+  > Le pipeline échoue si le code ne respecte pas les normes de formatage définies.
 
-Qualité du code (Linting & Formatting) :
+* Tests automatisés :
+  > Lancement des tests unitaires via `pytest`.
 
-    Le code est analysé et vérifié par ruff (remplaçant moderne de outils comme Flake8 ou Black).
+  > Le script vérifie la présence de fichiers de test avant de lancer la commande pour éviter les erreurs inutiles.
 
-    Le pipeline échoue si le code ne respecte pas les normes de formatage définies.
+  > Rapport de couverture : Upload automatique des rapports de couverture de code vers Codecov si les tests réussissent.
 
-    ​
 
-Tests automatisés :
 
-    Lancement des tests unitaires via pytest.
+## 🚀 Déploiement Continu (CD)
 
-    Le script vérifie intelligemment la présence de fichiers de test avant de lancer la commande pour éviter les erreurs inutiles.
+Le workflow CD est orchestré pour se lancer uniquement après la réussite du workflow CI.
+Il gère la construction des images Docker et leur déploiement sur un serveur distant (infrastructure Oracle Cloud).
 
-Rapport de couverture : Upload automatique des rapports de couverture de code vers Codecov si les tests réussissent.
 
-    ​
+### Étapes clés du pipeline d’exécution de la CD
 
-2. Déploiement Continu (CD)
+* Construction des Images (Build & Push)
 
-Le workflow CD est orchestré pour se lancer uniquement après la réussite du workflow CI. Il gère la construction des images Docker et leur déploiement sur un serveur distant (infrastructure Oracle Cloud).
-Construction des Images (Build & Push)
+  > Ce job prépare les conteneurs pour la production. Pour optimiser l’espace disque, les services sont construits séquentiellement avec un nettoyage systématique entre chaque étape.[2]
 
-Ce job prépare les conteneurs pour la production. Pour optimiser l'espace disque, les services sont construits séquentiellement avec un nettoyage systématique entre chaque étape.
+  > Registre de conteneurs : Les images sont stockées sur le GitHub Container Registry (GHCR).
 
-​
 
-    Registre de conteneurs : Les images sont stockées sur le GitHub Container Registry (GHCR).
+* Déploiement (Deploy SSH)
 
-    Services construits :
+  > Une fois les images construites, le déploiement s’effectue via SSH sur le serveur cible.
 
-        Le pipeline construit et pousse actuellement les images pour : API (FastAPI), Airflow, MLflow, MongoDB, et Prometheus.
+  > Transfert de configuration : Copie des fichiers `docker-compose*.yml` vers le serveur via SCP.
 
-​
+  > Mise à jour des services
+  > * Connexion au registre GHCR depuis le serveur.
+  > * Téléchargement des nouvelles images (`docker compose pull`).
+  > * Redémarrage des conteneurs en tâche de fond (`docker compose up -d`).
+  > * Nettoyage des anciennes images inutilisées pour libérer de l’espace (`docker image prune`).
 
-Note importante : Les services Streamlit (Frontend), Trainer, et Predictor sont actuellement commentés dans le fichier cd.yml et ne sont donc pas construits automatiquement pour le moment.
 
-        ​
-
-Déploiement (Deploy SSH)
-
-Une fois les images construites, le déploiement s'effectue via SSH sur le serveur cible.
-
-    Transfert de configuration : Copie des fichiers docker-compose*.yml vers le serveur via SCP.
-
-​
-
-Mise à jour des services :
-
-    Connexion au registre GHCR depuis le serveur.
-
-    Téléchargement des nouvelles images (docker compose pull).
-
-    Redémarrage des conteneurs en tâche de fond (docker compose up -d).
-
-    Nettoyage des anciennes images inutilisées pour libérer de l'espace (docker image prune).
-
-        ​
+## 📌 Récapitulatif
 
 | Composant               | Outils / Technologies               |
 | ----------------------- | ----------------------------------- |
-| Gestionnaire de paquets | uv (Performance)                    |
-| Linter / Formatter      | ruff                                |
-| Tests                   | pytest + Codecov                    |
+| Gestionnaire de paquets | `uv` (Performance)                  |
+| Linter / Formatter      | `ruff`                              |
+| Tests                   | `pytest` + Codecov                  |
 | Conteneurisation        | Docker + Docker Buildx (Multi-arch) |
-| Registre d'images       | GitHub Container Registry (ghcr.io) |
+| Registre d’images       | GitHub Container Registry (ghcr.io) |
 | Déploiement             | SSH + Docker Compose                |
-                
 """)
 
 # =====================================================
