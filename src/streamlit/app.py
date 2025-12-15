@@ -364,7 +364,7 @@ Le fonctionnement est le suivant :
 - Toutes les requêtes aux endpoints sensibles (/predict ou /train) doivent inclure ce token dans l’entête Authorization: Bearer <token>.
 Si le token est absent, invalide ou expiré, l’accès est refusé.
 """)
-    st.write("### Grestion de l'entrainement")
+    st.write("### Gestion de l'entrainement")
     st.markdown("""Le service d’entraînement propose un endpoint : /train.
 Fonctionnement général
 Après authentification :
@@ -373,7 +373,7 @@ Le modèle est réentraîné selon les procédures définies dans ce module exte
 L’API retourne un message indiquant que l’authentification est correcte, que l’entraînement s’est bein effectué et que les données retournées par le processus d’entraînement.
 En cas d’erreur ou d’absence de token valide, une erreur est renvoyée.
 """)
-    st.write("### Grestion de la prediction")
+    st.write("### Gestion de la prediction")
     st.markdown("""Le service de prédiction offre un endpoint principal : /predict.
 Fonctionnement général
 Lors d’un appel à ce service authentifié :
@@ -384,7 +384,7 @@ Lors d’un appel à ce service authentifié :
 - L’API retourne : le résultat de la prédiction, la désignation et la description utilisées, un message indiquant que la connexion et la prédiction ont réussi.
 Si l’image n’existe pas, l’API renvoie un message indiquant qu’aucun résultat n’est disponible.
 """)
-    st.write("### Grestion de la vérification et du monitoring")
+    st.write("### Gestion de la vérification et du monitoring")
     st.markdown("""Chaque service expose également un endpoint / (POST) qui renvoie simplement un message confirmant que l’API est opérationnelle.
 Cela permet de vérifier rapidement l’état du service.
 
@@ -555,11 +555,6 @@ L’interface propose également des sections regroupant les métriques avancée
 elif page == "8. CI/CD : GitHub Actions":
     st.title("CI/CD : GitHub Actions")
     st.markdown("""
-GitHub Actions :
-- Tests unitaires
-- Build & Push Docker
-- Déploiement automatique
-                
 Le pipeline est divisé en deux flux distincts : une chaîne d'intégration pour valider la qualité du code (ci.yml) et une chaîne de déploiement pour la mise en production (cd.yml).
 1. Intégration Continue (CI)
 
