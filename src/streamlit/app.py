@@ -555,11 +555,6 @@ L’interface propose également des sections regroupant les métriques avancée
 elif page == "8. CI/CD : GitHub Actions":
     st.title("CI/CD : GitHub Actions")
     st.markdown("""
-GitHub Actions :
-- Tests unitaires
-- Build & Push Docker
-- Déploiement automatique
-                
 Le pipeline est divisé en deux flux distincts : une chaîne d'intégration pour valider la qualité du code (ci.yml) et une chaîne de déploiement pour la mise en production (cd.yml).
 1. Intégration Continue (CI)
 
