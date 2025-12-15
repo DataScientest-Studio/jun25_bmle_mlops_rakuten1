@@ -269,8 +269,6 @@ Streamlit sert d’interface utilisateur pour présenter le projet et permettre 
 * L’application propose une sélection aléatoire de 5 couples texte/image issus du jeu de test.
 * Elle interroge l’API de prédiction pour afficher la catégorie estimée et les informations associées.
 
-
-Le pipeline est divisé en deux flux distincts : une chaîne d’intégration pour valider la qualité du code (`ci.yml`) et une chaîne de déploiement pour la mise en production (`cd.yml`).
 """)
 
 # =====================================================
@@ -629,6 +627,10 @@ L’interface propose également des sections regroupant les métriques avancée
 elif page == "8. CI/CD : GitHub Actions":
     st.title("CI/CD : GitHub Actions")
     st.markdown("""
+Le pipeline est divisé en deux flux distincts : 
+* une chaîne d’intégration pour valider la qualité du code (`ci.yml`) 
+* une chaîne de déploiement pour la mise en production (`cd.yml`)
+
 ## ✅ Intégration Continue (CI)
 
 Le workflow CI est déclenché automatiquement à chaque `push` ou `pull request` sur la branche `master`.
