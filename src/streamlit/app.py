@@ -605,19 +605,27 @@ Il relie ainsi la partie **données** (drift) et la partie **modèle** (ré-entr
 elif page == "7. Monitoring : Grafana / Prometheus":
     st.title("Monitoring : Grafana / Prometheus")
     st.markdown("""Trois dashboard on était mis en place et configurer
+- FastAPI Observability
 - Linux Exporter Dashboard 2025
 - Windows Exporter Dashboard 2025
-- FastAPI Observability
 """)
     st.write("### FastAPI Observability")
     st.markdown("""Le dashboard FastAPI est dédié à la supervision des services applicatifs. Il affiche le nombre de requêtes reçues par endpoint, réparties par méthode et par période, ainsi que les temps de réponse moyens.
 Le tableau de bord inclut également des panneaux de suivi du pourcentage de réponses réussies, des distributions de latence et d’autres métriques applicatives fournies par l’instrumentation Prometheus.
-Chaque composant visuel met en avant une catégorie spécifique : volumétrie des requêtes, durée d'exécution, répartition des codes de statut et activité par endpoint, facilitant ainsi la surveillance opérationnelle de l’API.
+Chaque composant visuel met en avant une catégorie spécifique :
+- Volumétrie des requêtes
+- Durée d'exécution
+- Répartition des codes de statut et activité par endpoint (2XX, 5XX, etc...), facilitant ainsi la surveillance opérationnelle de l’API.
 """)
     st.write("### Linux Exporter et Windows Exporter Dashboard 2025")
     st.markdown("""Ces deux dashbords présente l’ensemble des métriques essentielles liées au fonctionnement du serveur. Il inclut des jauges de charge CPU, d’utilisation mémoire, d’usage du swap, d’occupation du système de fichiers, ainsi que des informations générales comme le nombre de cœurs, la mémoire totale et le temps de fonctionnement.
 Des graphiques détaillés complètent ces indicateurs en affichant l’évolution de la charge CPU, de la mémoire, de l’utilisation disque et du trafic réseau sur différentes périodes.
-L’interface propose également des sections regroupant les métriques avancées : mémoire, processus système, réseaux, I/O et autres informations bas niveau collectées par Node Exporter.
+L’interface propose également des sections regroupant les métriques avancées :
+- Mémoire
+- Processus système
+- Réseaux
+- Entrée / Sortie (Input / Output)
+- Autres informations bas niveau collectées par Node Exporter.
 """)
 
 # =====================================================
