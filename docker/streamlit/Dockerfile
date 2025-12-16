@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir streamlit requests pandas
 
 # Copy your streamlit app folder
 COPY src/streamlit/ /app/
+COPY ressources/ /app/ressources/
 
 EXPOSE 8501
 

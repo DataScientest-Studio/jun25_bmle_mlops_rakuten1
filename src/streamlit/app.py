@@ -9,6 +9,7 @@ from PIL import Image
 API_URL = "http://rakuten_predictor:8080"
 RAW_DIR = os.path.join("data", "raw")
 IMG_DIR = os.path.join(RAW_DIR, "images", "images")
+RESSOURCE_DIR = os.path.join("ressources", "images")
 
 st.set_page_config(layout="wide")
 
@@ -423,6 +424,8 @@ Scripts associés :
 
 elif page == "4.  API":
     st.title("🔌 API")
+    image_path = os.path.join(RESSOURCE_DIR, "fastapi.png")
+    st.image(image_path, width="content")
     st.markdown("""L’API Rakuten est composée de deux services principaux :
 - Un service de prédiction
 - Un service d’entraînement du modèle
@@ -601,6 +604,8 @@ Il relie ainsi la partie **données** (drift) et la partie **modèle** (ré-entr
 
 elif page == "7.  Monitoring : Grafana / Prometheus":
     st.title("📈 Monitoring : Grafana / Prometheus")
+    image_path = os.path.join(RESSOURCE_DIR, "prometheus_grafana.png")
+    st.image(image_path, width="content")
     st.markdown("""Trois dashboard on était mis en place et configurer
 - FastAPI Observability
 - Linux Exporter Dashboard 2025
