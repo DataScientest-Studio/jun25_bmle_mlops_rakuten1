@@ -135,7 +135,7 @@ def train():
 
     # === 3️⃣ Paramètres du modèle ===
     device = "cuda" if gpu_available() else "cpu"
-    #device = "cpu"
+    # device = "cpu"
     params = {
         "objective": "multi:softprob",
         "num_class": len(np.unique(y_train_enc)),
