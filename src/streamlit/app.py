@@ -21,16 +21,16 @@ st.sidebar.title("Navigation du projet")
 page = st.sidebar.radio(
     "Aller à :",
     [
-        "1. Intro : contexte & objectifs",
-        "2. Architecture globale / Dockerisation / Environnement développement",
-        "3. Pipelines : train & predict + DB",
-        "4. API",
-        "5. Model Tracking : MLflow",
-        "6. Automatisation : Airflow - drift / Evidently",
-        "7. Monitoring : Grafana / Prometheus",
-        "8. CI/CD : GitHub Actions",
-        "9. Conclusion & Opportunités futures",
-        "Démo : prédiction Rakuten",
+        "1.  Intro : contexte & objectifs",
+        "2.  Architecture du projet",
+        "3.  Pipelines : train & predict + DB",
+        "4.  API",
+        "5.  Model Tracking : MLflow",
+        "6.  Automatisation : Airflow - drift / Evidently",
+        "7.  Monitoring : Grafana / Prometheus",
+        "8.  CI/CD : GitHub Actions",
+        "9.  Démo : prédiction Rakuten",
+        "10. Conclusion & Opportunités futures",
     ],
 )
 
@@ -38,8 +38,7 @@ page = st.sidebar.radio(
 # 1. INTRO MARC
 # =====================================================
 
-
-if page == "1. Intro : contexte & objectifs":
+if page == "1.  Intro : contexte & objectifs":
     st.title("🎯 Introduction : Contexte & Objectifs du Projet")
 
     st.markdown("""
@@ -182,7 +181,7 @@ recommandation, catégorisation automatique, qualité du catalogue, recherche in
 # 2. ARCHITECTURE / DOCKER / ENV DE DEV SEBASTIEN
 # =====================================================
 
-elif page == "2. Architecture du projet":
+elif page == "2.  Architecture du projet":
     st.title("Architecture du projet")
     st.markdown("""
 ## 📂 Structure du Projet
@@ -275,8 +274,7 @@ Streamlit sert d’interface utilisateur pour présenter le projet et permettre 
 # 3. PIPELINES TRAIN & PREDICT + DB MARC
 # =====================================================
 
-
-elif page == "3. Pipelines : train & predict + DB":
+elif page == "3.  Pipelines : train & predict + DB":
     st.title("🔁 Pipelines : Train, Predict & Base de Données")
 
     st.markdown("""
@@ -287,6 +285,31 @@ comme source unique de données nettoyées.
 
 ---
 
+# 🔁 Schéma global du pipeline
+    """)
+
+    st.graphviz_chart(
+        """
+digraph {
+    rankdir=LR;
+    node [shape=box, style="rounded,filled", color="#1E88E5", fontcolor=white, fontsize=18];
+
+    A [label="CSV + Images\nDonnées brutes"];
+    B [label="Cleaning texte + image\n(clean_data.py)"];
+    BB [label="MongoDB\nX_train_cleaned\nX_test_cleaned"];
+    C [label="Préprocessing\nTF-IDF + ResNet50\n(preprocess_data.py)"];
+    D [label="Fusion sparse\n(texte + image)"];
+    E [label="Train XGBoost\n(train.py)"];
+    F [label="MLflow Tracking\nMetrics + Artefacts"];
+
+    A -> B -> BB -> C -> D -> E -> F;
+}
+""",
+        width="stretch",
+    )
+
+    st.markdown("""
+---
 # 🧹 1️⃣ CLEANING PIPELINE (clean_data.py)
 
 📥 Données entrantes :
@@ -391,38 +414,14 @@ Scripts associés :
 - conf_loader.py : charge la configuration MongoDB (YAML + valeurs par défaut)
 - utils.py (MongoUtils) : fournit un context manager pour se connecter proprement à MongoDB
 - setup_database.py : crée des index, insère des données de test et valide le setup
-
----
-
-# 🔁 Schéma global du pipeline
     """)
-
-    st.graphviz_chart(
-        """
-digraph {
-    rankdir=LR;
-    node [shape=box, style="rounded,filled", color="#1E88E5", fontcolor=white, fontsize=18];
-
-    A [label="CSV + Images\nDonnées brutes"];
-    B [label="Cleaning texte + image\n(clean_data.py)"];
-    BB [label="MongoDB\nX_train_cleaned\nX_test_cleaned"];
-    C [label="Préprocessing\nTF-IDF + ResNet50\n(preprocess_data.py)"];
-    D [label="Fusion sparse\n(texte + image)"];
-    E [label="Train XGBoost\n(train.py)"];
-    F [label="MLflow Tracking\nMetrics + Artefacts"];
-
-    A -> B -> BB -> C -> D -> E -> F;
-}
-""",
-        width="stretch",
-    )
 
 
 # =====================================================
 # 4. API
 # =====================================================
 
-elif page == "4. API":
+elif page == "4.  API":
     st.title("API")
     st.markdown("""L’API Rakuten est composée de deux services principaux :
 - Un service de prédiction
@@ -475,12 +474,11 @@ La première série de test confirme le bon fonctionnement de la génération du
 Les autres tests sont la vérification du fonctionnement des endpoints /train et /predict avec un token correct et incorrect.
 """)
 
-
 # =====================================================
 # 5. MLflow PASCAL
 # =====================================================
 
-elif page == "5. Model Tracking : MLflow":
+elif page == "5.  Model Tracking : MLflow":
     st.title("Model Tracking : MLflow")
 
     st.markdown("""
@@ -530,12 +528,11 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 [web:59][web:62][web:71][web:83]
     """)
 
-
 # =====================================================
 # 6. AIRFLOW + DRIFT
 # =====================================================
 
-elif page == "6. Automatisation : Airflow - drift / Evidently":
+elif page == "6.  Automatisation : Airflow - drift / Evidently":
     st.title("🌀 Automatisation : Airflow")
 
     st.markdown("""
@@ -602,7 +599,7 @@ Il relie ainsi la partie **données** (drift) et la partie **modèle** (ré-entr
 # 7. MONITORING
 # =====================================================
 
-elif page == "7. Monitoring : Grafana / Prometheus":
+elif page == "7.  Monitoring : Grafana / Prometheus":
     st.title("Monitoring : Grafana / Prometheus")
     st.markdown("""Trois dashboard on était mis en place et configurer
 - FastAPI Observability
@@ -632,7 +629,7 @@ L’interface propose également des sections regroupant les métriques avancée
 # 8. CI/CD SEBASTIEN
 # =====================================================
 
-elif page == "8. CI/CD : GitHub Actions":
+elif page == "8.  CI/CD : GitHub Actions":
     st.title("CI/CD : GitHub Actions")
     st.markdown("""
 Le pipeline est divisé en deux flux distincts : 
@@ -704,107 +701,10 @@ Il gère la construction des images Docker et leur déploiement sur un serveur d
 """)
 
 # =====================================================
-# 9. CONCLUSION MARC
+# 9. PAGE : DEMO PREDICTION
 # =====================================================
 
-elif page == "9. Conclusion & Opportunités futures":
-    st.title("🏁 Conclusion & Opportunités futures")
-
-    st.markdown("""
-# 🎓 Conclusion du projet Rakuten – Classification Multimodale & MLOps
-
-Ce projet nous a permis de couvrir **toute la chaîne de valeur d’un système de Machine Learning moderne**, 
-depuis la donnée brute jusqu’au déploiement d’un modèle servable.  
-Nous avons développé un modèle multimodal texte + image et appris à le déployer en suivant les principes structurés de l’ingénierie MLOps.
-
----
-
-## ✅ Ce que nous avons accompli
-
-### **1. Construire un modèle ML complet**
-Nous avons appliqué l’ensemble des techniques apprises dans le cursus :
-- NLP (cleaning, TF-IDF, traitement texte)
-- Computer Vision (embeddings ResNet50)
-- Classification XGBoost multimodale
-- Optimisation, métriques, validation
-
-### **2. Intégrer les bonnes pratiques MLOps**
-Le projet a permis de mettre en œuvre :
-- **Pipelines reproductibles** (cleaning → preprocessing → train)
-- **Suivi d’expérience MLflow**
-- **Versionnement des modèles**
-- **API d’inférence** prête à l’emploi
-- **Microservices Docker** interconnectés
-- **Orchestration docker-compose**
-- **Base de données MongoDB** comme source unique des données nettoyées
-
-Ces outils peuvent paraître complexes, mais en progressant étape par étape, nous avons réussi à les maîtriser et à en faire un système stable et fonctionnel.
-
-### **3. Un vrai travail d’équipe**
-Le projet a été réalisé en équipe :
-- **Chacun a apporté sa vision, ses compétences et son approche**
-- Les décisions ont été **construites collectivement**
-- Le fonctionnement en groupe a permis de **résoudre des problèmes techniques réels**, 
-  notamment sur l'architecture globale, la gestion de Docker, les connexions API, les databases, les configurations MLflow, Airflow...
-
-Ce travail collaboratif a joué un rôle essentiel dans l’avancement et la réussite du projet.
-
----
-
-# 🚀 Opportunités futures
-
-Même si notre système fonctionne en local et en docker, plusieurs axes d’amélioration s’ouvrent :
-
-### **📌 1. Déploiement sur serveur cloud**
-- hébergement API + Streamlit
-- stockage MinIO en cloud
-- modèle servable 24/7
-
-### **📌 2. Optimisation de l’architecture**
-- réduction du nombre de conteneurs
-- rationalisation des services
-- meilleure modularité pour la maintenance
-
-### **📌 3. Optimisation des performances**
-- accélération du preprocessing
-- batching GPU pour XGBoost
-
-### **📌 4. Amélioration de la qualité du code**
-- refactoring du pipeline
-- réduction du code redondant
-- structuration plus modulaire
-
-### **📌 5. Amélioration de l’UX / UI (frontend)**
-- meilleure ergonomie Streamlit
-- affichage image + texte dans les prédictions
-- navigation simplifiée
-
-### **📌 6. Robustesse & Qualité**
-- tests unitaires (pytest)
-- gestion d’erreurs API
-- monitoring du drift (Evidently)
-- alertes Prometheus / Grafana
-
----
-
-# 🎯 Conclusion finale
-
-Nous avons montré que **nous savons concevoir, entraîner, déployer et surveiller un modèle de Machine Learning complet**.  
-Nous avons acquis **la culture Data / IA / MLOps** moderne et la capacité de gérer des environnements techniques complexes.
-
-Le système fonctionne, le pipeline est cohérent, et surtout…
-
-👉 **Nous savons maintenant créer ET déployer un modèle ML dans un environnement MLOps complet.**
-
-Un projet riche, formateur, et qui ouvre naturellement la porte à des déploiements plus ambitieux.
-
-""")
-
-# =====================================================
-#                 PAGE : DEMO PREDICTION
-# =====================================================
-
-elif page == "Démo : prédiction Rakuten":
+elif page == "9.  Démo : prédiction Rakuten":
     st.title("Démo : prédiction Rakuten")
 
     # ---------- LOGIN ----------
@@ -923,3 +823,100 @@ elif page == "Démo : prédiction Rakuten":
             )
     else:
         st.info("Veuillez d'abord obtenir un jeton.")
+
+# =====================================================
+# 10. CONCLUSION MARC
+# =====================================================
+
+elif page == "10. Conclusion & Opportunités futures":
+    st.title("🏁 Conclusion & Opportunités futures")
+
+    st.markdown("""
+# 🎓 Conclusion du projet Rakuten – Classification Multimodale & MLOps
+
+Ce projet nous a permis de couvrir **toute la chaîne de valeur d’un système de Machine Learning moderne**, 
+depuis la donnée brute jusqu’au déploiement d’un modèle servable.  
+Nous avons développé un modèle multimodal texte + image et appris à le déployer en suivant les principes structurés de l’ingénierie MLOps.
+
+---
+
+## ✅ Ce que nous avons accompli
+
+### **1. Construire un modèle ML complet**
+Nous avons appliqué l’ensemble des techniques apprises dans le cursus :
+- NLP (cleaning, TF-IDF, traitement texte)
+- Computer Vision (embeddings ResNet50)
+- Classification XGBoost multimodale
+- Optimisation, métriques, validation
+
+### **2. Intégrer les bonnes pratiques MLOps**
+Le projet a permis de mettre en œuvre :
+- **Pipelines reproductibles** (cleaning → preprocessing → train)
+- **Suivi d’expérience MLflow**
+- **Versionnement des modèles**
+- **API d’inférence** prête à l’emploi
+- **Microservices Docker** interconnectés
+- **Orchestration docker-compose**
+- **Base de données MongoDB** comme source unique des données nettoyées
+
+Ces outils peuvent paraître complexes, mais en progressant étape par étape, nous avons réussi à les maîtriser et à en faire un système stable et fonctionnel.
+
+### **3. Un vrai travail d’équipe**
+Le projet a été réalisé en équipe :
+- **Chacun a apporté sa vision, ses compétences et son approche**
+- Les décisions ont été **construites collectivement**
+- Le fonctionnement en groupe a permis de **résoudre des problèmes techniques réels**, 
+  notamment sur l'architecture globale, la gestion de Docker, les connexions API, les databases, les configurations MLflow, Airflow...
+
+Ce travail collaboratif a joué un rôle essentiel dans l’avancement et la réussite du projet.
+
+---
+
+# 🚀 Opportunités futures
+
+Même si notre système fonctionne en local et en docker, plusieurs axes d’amélioration s’ouvrent :
+
+### **📌 1. Déploiement sur serveur cloud**
+- hébergement API + Streamlit
+- stockage MinIO en cloud
+- modèle servable 24/7
+
+### **📌 2. Optimisation de l’architecture**
+- réduction du nombre de conteneurs
+- rationalisation des services
+- meilleure modularité pour la maintenance
+
+### **📌 3. Optimisation des performances**
+- accélération du preprocessing
+- batching GPU pour XGBoost
+
+### **📌 4. Amélioration de la qualité du code**
+- refactoring du pipeline
+- réduction du code redondant
+- structuration plus modulaire
+
+### **📌 5. Amélioration de l’UX / UI (frontend)**
+- meilleure ergonomie Streamlit
+- affichage image + texte dans les prédictions
+- navigation simplifiée
+
+### **📌 6. Robustesse & Qualité**
+- tests unitaires (pytest)
+- gestion d’erreurs API
+- monitoring du drift (Evidently)
+- alertes Prometheus / Grafana
+
+---
+
+# 🎯 Conclusion finale
+
+Nous avons montré que **nous savons concevoir, entraîner, déployer et surveiller un modèle de Machine Learning complet**.  
+Nous avons acquis **la culture Data / IA / MLOps** moderne et la capacité de gérer des environnements techniques complexes.
+
+Le système fonctionne, le pipeline est cohérent, et surtout…
+
+👉 **Nous savons maintenant créer ET déployer un modèle ML dans un environnement MLOps complet.**
+
+Un projet riche, formateur, et qui ouvre naturellement la porte à des déploiements plus ambitieux.
+
+""")
