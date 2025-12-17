@@ -483,7 +483,6 @@ Les autres tests sont la vérification du fonctionnement des endpoints /train et
 
 elif page == "5.  Model Tracking : MLflow":
     st.title("Model Tracking : MLflow")
-
     st.markdown("""
 ### 🎯 Rôle de MLflow dans le projet
 
@@ -492,7 +491,6 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 - Journalisation des **paramètres / hyperparamètres** du modèle XGBoost
 - Suivi des **métriques** (accuracy, F1, etc.)
 - Stockage des **artefacts** : modèle, TF-IDF, LabelEncoder, logs...
-[web:35][web:81][web:86]
     """)
 
     st.markdown("""
@@ -501,7 +499,6 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 - Service **MLflow** dans un conteneur dédié (port 5000) avec backend SQLite pour les métadonnées des runs
 - Service **MinIO (S3)** pour stocker les artefacts dans le bucket `mlflow-artifacts`
 - Variables d'environnement (`MLFLOW_HOST`, `MLFLOW_S3_ENDPOINT_URL`, clés MinIO) pour connecter les scripts au tracking server
-[web:1][web:10][web:16][web:89]
     """)
 
     st.markdown("""
@@ -510,7 +507,6 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 - Le script `train()` initialise l'expérience `rakuten_xgb_fusion` et démarre un **run MLflow**
 - Log des hyperparamètres XGBoost (profondeur, learning rate, device CPU/GPU...)
 - Log des métriques de validation (accuracy, F1) et du modèle XGBoost + artefacts de prétraitement (TF-IDF, LabelEncoder)
-[web:21][web:22][web:26][web:82]
     """)
 
     st.markdown("""
@@ -519,7 +515,6 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 - L'API de prédiction interroge MLflow pour récupérer le **meilleur run** de l'expérience (trié par accuracy)
 - Chargement du modèle (`runs:/<run_id>/xgb_model`) et des artefacts associés depuis le store d'artefacts (MinIO)
 - L'endpoint de prédiction sert toujours le modèle le plus performant enregistré dans MLflow
-[web:35][web:40][web:45][web:90]
     """)
 
     st.markdown("""
@@ -528,7 +523,6 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 - Endpoint `/train` → déclenche `train()` et crée un nouveau run MLflow
 - Endpoint `/predict` → appelle `predict()`, recharge le meilleur modèle depuis MLflow et renvoie une prédiction JSON
 - Séparation claire entre **tracking des expériences** (MLflow) et **serving** (API + Streamlit)
-[web:59][web:62][web:71][web:83]
     """)
 
 # =====================================================
@@ -537,7 +531,6 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 
 elif page == "6.  Automatisation : Airflow - drift / Evidently":
     st.title("🌀 Automatisation : Airflow")
-
     st.markdown("""
 ### 🏗️ Infrastructure Airflow (Docker)
 
@@ -566,9 +559,11 @@ Le DAG :
 - Utilise un `BranchPythonOperator` pour choisir entre :
   - déclencher le DAG d'entraînement (`trigger_rakuten_weekly_training`),
   - ou ne rien faire (`no_trigger`).
-[web:131][web:132][web:138][web:148]
     """)
-
+    image_path = os.path.join(RESSOURCE_DIR, "Evidently1.png")
+    st.image(image_path, width="content")
+    image_path = os.path.join(RESSOURCE_DIR, "Evidently2.png")
+    st.image(image_path, width="content")
     st.markdown("""
 ### 🔁 DAG d'entraînement hebdomadaire
 
@@ -583,7 +578,6 @@ Le DAG :
 Ce DAG peut être lancé :
 - automatiquement chaque semaine par le scheduler,
 - ou **à la demande** par le DAG de dérive lorsqu'un drift est détecté.
-[web:94][web:129][web:111]
     """)
 
     st.markdown("""
@@ -595,7 +589,6 @@ Airflow joue le rôle de **chef d'orchestre** de la pipeline MLOps :
 - Centralise la **traçabilité** des exécutions (états des DAGs, logs, durées) dans l'UI Airflow.
 
 Il relie ainsi la partie **données** (drift) et la partie **modèle** (ré-entraînement + tracking MLflow) dans un même outil d'orchestration.
-[web:103][web:111][web:112]
     """)
 
 # =====================================================
