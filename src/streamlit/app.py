@@ -185,6 +185,11 @@ recommandation, catégorisation automatique, qualité du catalogue, recherche in
 elif page == "2.  Architecture du projet":
     st.title("Architecture du projet")
     st.markdown("""
+## 🧭 Architecture du projet
+""")
+    image_path = os.path.join(RESSOURCE_DIR, "MLOps_Rakuten_V1.png")
+    st.image(image_path, width="content")
+    st.markdown("""
 ## 📂 Structure du Projet
 ```
     ├── .dockerignore      <- ignore for docker
