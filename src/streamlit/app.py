@@ -291,7 +291,7 @@ comme source unique de données nettoyées.
 
 ---
 
-# 🔁 Schéma global du pipeline
+# 🔁 Schéma global du pipeline Train
     """)
 
     st.graphviz_chart(
@@ -488,6 +488,8 @@ Les autres tests sont la vérification du fonctionnement des endpoints /train et
 
 elif page == "5.  Model Tracking : MLflow":
     st.title("Model Tracking : MLflow")
+    image_path = os.path.join(RESSOURCE_DIR, "mlflow.png")
+    st.image(image_path, width="content")
     st.markdown("""
 ### 🎯 Rôle de MLflow dans le projet
 
@@ -536,6 +538,8 @@ MLflow est utilisé comme **serveur central de suivi des expériences** :
 
 elif page == "6.  Automatisation : Airflow - drift / Evidently":
     st.title("🌀 Automatisation : Airflow")
+    image_path = os.path.join(RESSOURCE_DIR, "airflow.png")
+    st.image(image_path, width="content")
     st.markdown("""
 ### 🏗️ Infrastructure Airflow (Docker)
 
