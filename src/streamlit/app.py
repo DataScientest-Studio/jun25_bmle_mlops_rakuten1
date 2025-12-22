@@ -434,6 +434,7 @@ elif page == "4.  API":
     st.markdown("""L’API Rakuten est composée de deux services principaux :
 - Un service de prédiction
 - Un service d’entraînement du modèle
+
 Ces deux services sont organisés sous forme d’API FastAPI distinctes, mais qui fonctionnent selon une logique similaire.""")
     st.write("### 🔐 Gestion Login et token")
     st.markdown("""Les deux services utilisent un mécanisme d’authentification par token JWT.
@@ -444,17 +445,19 @@ Le fonctionnement est le suivant :
 Si le token est absent, invalide ou expiré, l’accès est refusé.
 """)
     st.write("### 🏋️ Gestion de l'entrainement")
-    st.markdown("""Le service d’entraînement propose un endpoint : /train.
-Fonctionnement général
+    st.markdown("""
+Le service d’entraînement propose un endpoint : /train.
+
 Après authentification :
-L’API appelle le module d’entraînement du modèle.
-Le modèle est réentraîné selon les procédures définies dans ce module externe.
-L’API retourne un message indiquant que l’authentification est correcte, que l’entraînement s’est bein effectué et que les données retournées par le processus d’entraînement.
-En cas d’erreur ou d’absence de token valide, une erreur est renvoyée.
+- L’API appelle le module d’entraînement du modèle.
+- Le modèle est réentraîné selon les procédures définies dans ce module externe.
+- L’API retourne un message indiquant que l’authentification est correcte, que l’entraînement s’est bien effectué et que les données retournées par le processus d’entraînement.
+- En cas d’erreur ou d’absence de token valide, une erreur est renvoyée.
 """)
     st.write("### 🔮 Gestion de la prediction")
-    st.markdown("""Le service de prédiction offre un endpoint principal : /predict.
-Fonctionnement général
+    st.markdown("""
+Le service de prédiction offre un endpoint principal : /predict.
+
 Lors d’un appel à ce service authentifié :
 - L’API sélectionne au hasard une ligne dans un fichier CSV contenant des données de test.
 - Elle identifie l’image correspondante à cette ligne dans un dossier d’images.
@@ -475,9 +478,11 @@ Cela permet d’exposer des métriques lié à l'api, de monitorer les performan
 - La gestion de l’authentification
 - Le comportement de l’API de prédiction
 - Le comportement de l’API d’entraînement du modèle
+
 Ils effectuent ces vérifications sur les deux api présenté précédemment :
 - l’API d’entraînement (port 8000)
 - l’API de prédiction (port 8080)
+
 La première série de test confirme le bon fonctionnement de la génération du token et de sa validation pour l'authentification.
 Les autres tests sont la vérification du fonctionnement des endpoints /train et /predict avec un token correct et incorrect.
 """)
