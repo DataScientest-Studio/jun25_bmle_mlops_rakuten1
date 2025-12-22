@@ -445,17 +445,19 @@ Le fonctionnement est le suivant :
 Si le token est absent, invalide ou expiré, l’accès est refusé.
 """)
     st.write("### 🏋️ Gestion de l'entrainement")
-    st.markdown("""Le service d’entraînement propose un endpoint : /train.
-Fonctionnement général
+    st.markdown("""
+Le service d’entraînement propose un endpoint : /train.
+
 Après authentification :
-L’API appelle le module d’entraînement du modèle.
-Le modèle est réentraîné selon les procédures définies dans ce module externe.
-L’API retourne un message indiquant que l’authentification est correcte, que l’entraînement s’est bein effectué et que les données retournées par le processus d’entraînement.
-En cas d’erreur ou d’absence de token valide, une erreur est renvoyée.
+- L’API appelle le module d’entraînement du modèle.
+- Le modèle est réentraîné selon les procédures définies dans ce module externe.
+- L’API retourne un message indiquant que l’authentification est correcte, que l’entraînement s’est bien effectué et que les données retournées par le processus d’entraînement.
+- En cas d’erreur ou d’absence de token valide, une erreur est renvoyée.
 """)
     st.write("### 🔮 Gestion de la prediction")
-    st.markdown("""Le service de prédiction offre un endpoint principal : /predict.
-Fonctionnement général
+    st.markdown("""
+Le service de prédiction offre un endpoint principal : /predict.
+
 Lors d’un appel à ce service authentifié :
 - L’API sélectionne au hasard une ligne dans un fichier CSV contenant des données de test.
 - Elle identifie l’image correspondante à cette ligne dans un dossier d’images.
