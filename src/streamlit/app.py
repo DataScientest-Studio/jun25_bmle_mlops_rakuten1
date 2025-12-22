@@ -434,6 +434,7 @@ elif page == "4.  API":
     st.markdown("""L’API Rakuten est composée de deux services principaux :
 - Un service de prédiction
 - Un service d’entraînement du modèle
+
 Ces deux services sont organisés sous forme d’API FastAPI distinctes, mais qui fonctionnent selon une logique similaire.""")
     st.write("### 🔐 Gestion Login et token")
     st.markdown("""Les deux services utilisent un mécanisme d’authentification par token JWT.
@@ -475,9 +476,11 @@ Cela permet d’exposer des métriques lié à l'api, de monitorer les performan
 - La gestion de l’authentification
 - Le comportement de l’API de prédiction
 - Le comportement de l’API d’entraînement du modèle
+
 Ils effectuent ces vérifications sur les deux api présenté précédemment :
 - l’API d’entraînement (port 8000)
 - l’API de prédiction (port 8080)
+
 La première série de test confirme le bon fonctionnement de la génération du token et de sa validation pour l'authentification.
 Les autres tests sont la vérification du fonctionnement des endpoints /train et /predict avec un token correct et incorrect.
 """)
